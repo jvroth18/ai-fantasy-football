@@ -1,0 +1,101 @@
+import { randomUUID } from 'node:crypto';
+
+import type { LeagueRuleSetV1 } from '@ai-ff/domain';
+
+export function pprRulesFixture(teamId = randomUUID()): LeagueRuleSetV1 {
+  return {
+    schemaVersion: 1,
+    id: randomUUID(),
+    teamId,
+    name: 'Custom PPR',
+    season: 2026,
+    platform: 'espn',
+    status: 'draft',
+    revision: 1,
+    scoring: [
+      {
+        stat: 'passing_yards',
+        label: 'Passing yards',
+        pointsPerUnit: 1,
+        unitSize: 25,
+        bonuses: [{ threshold: 300, points: 3, mode: 'at_least' }],
+        evidence: [],
+      },
+      {
+        stat: 'passing_touchdowns',
+        label: 'Passing touchdowns',
+        pointsPerUnit: 4,
+        unitSize: 1,
+        bonuses: [],
+        evidence: [],
+      },
+      {
+        stat: 'interceptions',
+        label: 'Interceptions',
+        pointsPerUnit: -2,
+        unitSize: 1,
+        bonuses: [],
+        evidence: [],
+      },
+      {
+        stat: 'rushing_yards',
+        label: 'Rushing yards',
+        pointsPerUnit: 1,
+        unitSize: 10,
+        bonuses: [],
+        evidence: [],
+      },
+      {
+        stat: 'receptions',
+        label: 'Receptions',
+        pointsPerUnit: 1,
+        unitSize: 1,
+        bonuses: [],
+        evidence: [],
+      },
+      {
+        stat: 'receiving_yards',
+        label: 'Receiving yards',
+        pointsPerUnit: 1,
+        unitSize: 10,
+        bonuses: [],
+        evidence: [],
+      },
+    ],
+    roster: [
+      { slot: 'QB', count: 1, starter: true, eligiblePositions: ['QB'] },
+      { slot: 'RB', count: 2, starter: true, eligiblePositions: ['RB'] },
+      { slot: 'WR', count: 2, starter: true, eligiblePositions: ['WR'] },
+      { slot: 'TE', count: 1, starter: true, eligiblePositions: ['TE'] },
+      { slot: 'FLEX', count: 1, starter: true, eligiblePositions: ['RB', 'WR', 'TE'] },
+      { slot: 'BENCH', count: 6, starter: false, eligiblePositions: ['QB', 'RB', 'WR', 'TE'] },
+    ],
+    draft: { type: 'snake', teamCount: 12, rounds: 13, secondsPerPick: 90, auctionBudget: null },
+    waivers: {
+      type: 'faab',
+      budget: 100,
+      minimumBid: 0,
+      processingDays: [3],
+      processingTimeLocal: '03:00',
+      freeAgentMode: 'first_come',
+      maxAcquisitionsPerWeek: null,
+      tiebreaker: 'rolling_order',
+    },
+    lineup: { lockType: 'player_game_time', allowBenchEditsAfterLock: true },
+    playoffs: {
+      teams: 6,
+      startWeek: 15,
+      championshipWeek: 17,
+      twoWeekMatchups: false,
+      reseed: false,
+    },
+    trades: {
+      deadlineWeek: 12,
+      reviewType: 'league_vote',
+      reviewHours: 24,
+      futureDraftPicksAllowed: false,
+    },
+    evidence: [],
+    createdAt: '2026-08-23T12:00:00.000Z',
+  };
+}
