@@ -1,0 +1,19 @@
+{
+  "name": "@ai-ff/codex",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts src/check.ts --format esm --dts --clean",
+    "check:local": "node dist/check.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  }
+}

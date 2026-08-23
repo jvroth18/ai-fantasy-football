@@ -95,6 +95,8 @@ importers:
         specifier: 29.1.1
         version: 29.1.1
 
+  packages/codex: {}
+
   packages/data:
     dependencies:
       '@ai-ff/domain':

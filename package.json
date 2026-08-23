@@ -17,6 +17,7 @@
     "format:check": "prettier --check . && cd services/analytics && uv run ruff format --check .",
     "test": "pnpm -r --if-present test && pnpm test:analytics",
     "test:analytics": "cd services/analytics && uv run pytest",
+    "codex:check": "pnpm --filter @ai-ff/codex build && pnpm --filter @ai-ff/codex check:local",
     "ci": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "devDependencies": {

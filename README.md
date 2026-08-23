@@ -19,10 +19,12 @@ Requirements:
 ```bash
 pnpm install
 cd services/analytics && uv sync && cd ../..
+pnpm codex:check
 pnpm dev
 ```
 
 The web interface runs at `http://127.0.0.1:4317`; the local daemon runs at `http://127.0.0.1:4318`.
+Codex authentication stays in the CLI; the readiness check reports only an account type and capability counts. See [docs/CODEX_INTEGRATION.md](docs/CODEX_INTEGRATION.md).
 
 ## Verification
 
