@@ -12,9 +12,9 @@
     "dev": "concurrently -n daemon,web -c cyan,magenta \"pnpm --filter @ai-ff/daemon dev\" \"pnpm --filter @ai-ff/web dev\"",
     "build": "pnpm -r --if-present build",
     "typecheck": "pnpm -r --if-present typecheck",
-    "lint": "eslint .",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "lint": "eslint . && cd services/analytics && uv run ruff check .",
+    "format": "prettier --write . && cd services/analytics && uv run ruff format .",
+    "format:check": "prettier --check . && cd services/analytics && uv run ruff format --check .",
     "test": "pnpm -r --if-present test && pnpm test:analytics",
     "test:analytics": "cd services/analytics && uv run pytest",
     "ci": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"

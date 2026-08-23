@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "datasets": [
+    { "provider": "nflverse", "name": "players", "seasonStart": null, "format": "parquet" },
+    { "provider": "nflverse", "name": "schedules", "seasonStart": null, "format": "parquet" },
+    { "provider": "nflverse", "name": "combine", "seasonStart": null, "format": "parquet" },
+    { "provider": "nflverse", "name": "draft_picks", "seasonStart": null, "format": "parquet" },
+    { "provider": "nflverse", "name": "player_stats", "seasonStart": 2012, "format": "parquet" },
+    { "provider": "nflverse", "name": "rosters", "seasonStart": 2015, "format": "parquet" },
+    { "provider": "nflverse", "name": "injuries", "seasonStart": 2009, "format": "parquet" },
+    { "provider": "nflverse", "name": "depth_charts", "seasonStart": 2015, "format": "parquet" },
+    { "provider": "nflverse", "name": "snap_counts", "seasonStart": 2012, "format": "parquet" }
+  ]
+}
