@@ -1,0 +1,27 @@
+node_modules/
+dist/
+coverage/
+.turbo/
+.vite/
+.DS_Store
+.env
+.env.*
+!.env.example
+*.log
+*.sqlite
+*.sqlite-*
+var/
+data/cache/
+data/raw/
+artifacts/
+screenshots/
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.ruff_cache/
+
+# Codex and browser credentials/state must never be committed.
+.codex/auth.json
+.playwright/
+auth.json

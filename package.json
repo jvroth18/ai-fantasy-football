@@ -1,0 +1,36 @@
+{
+  "name": "ai-fantasy-football",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A local-first, Codex-driven fantasy football front office.",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@10.12.4",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "concurrently -n daemon,web -c cyan,magenta \"pnpm --filter @ai-ff/daemon dev\" \"pnpm --filter @ai-ff/web dev\"",
+    "build": "pnpm -r --if-present build",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "pnpm -r --if-present test && pnpm test:analytics",
+    "test:analytics": "cd services/analytics && uv run pytest",
+    "ci": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@eslint/js": "latest",
+    "@types/node": "latest",
+    "concurrently": "latest",
+    "eslint": "latest",
+    "eslint-plugin-react-hooks": "latest",
+    "eslint-plugin-react-refresh": "latest",
+    "globals": "latest",
+    "prettier": "latest",
+    "tsup": "latest",
+    "typescript": "6.0.3",
+    "typescript-eslint": "latest",
+    "vitest": "latest"
+  }
+}
