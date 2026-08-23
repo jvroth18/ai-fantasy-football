@@ -371,7 +371,7 @@ export class JobLeaseRepository {
       .onConflictDoUpdate({
         target: [jobLeases.teamId, jobLeases.jobType],
         set: { ownerId, acquiredAt, expiresAt },
-        setWhere: sql`${jobLeases.expiresAt} <= ${acquiredAt} OR ${jobLeases.ownerId} = ${ownerId}`,
+        setWhere: sql`${jobLeases.expiresAt} <= ${acquiredAt}`,
       })
       .run();
     return result.changes === 1;

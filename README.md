@@ -30,6 +30,8 @@ ESPN mutations are disabled by default and developed against a deterministic por
 
 The football decision layer ranks draft picks, optimizes legal lineups, pairs adds with safe drops and bounded FAAB, escalates player news, and constructs mutually useful market-fair trade ideas. See [docs/DECISION_ENGINES.md](docs/DECISION_ENGINES.md).
 
+The local scheduler runs team-specific refresh and management jobs in each league's configured timezone, prevents overlaps with durable leases, and performs one bounded catch-up after downtime. See [docs/SCHEDULING.md](docs/SCHEDULING.md).
+
 ## Verification
 
 ```bash
