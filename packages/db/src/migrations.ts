@@ -82,6 +82,48 @@ const migrations = [
       );
     `,
   },
+  {
+    version: 2,
+    sql: `
+      CREATE TABLE IF NOT EXISTS player_identities (
+        id TEXT PRIMARY KEY,
+        full_name TEXT NOT NULL,
+        position TEXT NOT NULL,
+        nfl_team TEXT,
+        espn_id TEXT UNIQUE,
+        sleeper_id TEXT UNIQUE,
+        gsis_id TEXT UNIQUE,
+        mapping_confidence_basis_points INTEGER NOT NULL,
+        identity_json TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS player_identities_name_idx
+        ON player_identities(full_name);
+      CREATE TABLE IF NOT EXISTS data_snapshots (
+        id TEXT PRIMARY KEY,
+        provider TEXT NOT NULL,
+        source_url TEXT NOT NULL,
+        digest TEXT NOT NULL,
+        record_count INTEGER NOT NULL,
+        status TEXT NOT NULL,
+        fetched_at TEXT NOT NULL,
+        metadata_json TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS data_snapshots_provider_fetched_idx
+        ON data_snapshots(provider, fetched_at DESC);
+      CREATE TABLE IF NOT EXISTS news_items (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        source TEXT NOT NULL,
+        url TEXT NOT NULL UNIQUE,
+        published_at TEXT NOT NULL,
+        news_json TEXT NOT NULL,
+        fetched_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS news_items_published_idx
+        ON news_items(published_at DESC);
+    `,
+  },
 ] as const;
 
 export function applyMigrations(database: Database.Database): void {

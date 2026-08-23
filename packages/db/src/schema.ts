@@ -103,3 +103,45 @@ export const codexThreads = sqliteTable(
   },
   (table) => [uniqueIndex('codex_threads_team_purpose_unique').on(table.teamId, table.purpose)],
 );
+
+export const playerIdentities = sqliteTable(
+  'player_identities',
+  {
+    id: text('id').primaryKey(),
+    fullName: text('full_name').notNull(),
+    position: text('position').notNull(),
+    nflTeam: text('nfl_team'),
+    espnId: text('espn_id'),
+    sleeperId: text('sleeper_id'),
+    gsisId: text('gsis_id'),
+    mappingConfidence: integer('mapping_confidence_basis_points').notNull(),
+    identityJson: text('identity_json').notNull(),
+    updatedAt: text('updated_at').notNull(),
+  },
+  (table) => [
+    uniqueIndex('player_identities_espn_unique').on(table.espnId),
+    uniqueIndex('player_identities_sleeper_unique').on(table.sleeperId),
+    uniqueIndex('player_identities_gsis_unique').on(table.gsisId),
+  ],
+);
+
+export const dataSnapshots = sqliteTable('data_snapshots', {
+  id: text('id').primaryKey(),
+  provider: text('provider').notNull(),
+  sourceUrl: text('source_url').notNull(),
+  digest: text('digest').notNull(),
+  recordCount: integer('record_count').notNull(),
+  status: text('status').notNull(),
+  fetchedAt: text('fetched_at').notNull(),
+  metadataJson: text('metadata_json').notNull(),
+});
+
+export const newsItems = sqliteTable('news_items', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  source: text('source').notNull(),
+  url: text('url').notNull().unique(),
+  publishedAt: text('published_at').notNull(),
+  newsJson: text('news_json').notNull(),
+  fetchedAt: text('fetched_at').notNull(),
+});
