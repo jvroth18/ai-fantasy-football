@@ -76,7 +76,9 @@ export const actionIntents = sqliteTable(
     createdAt: text('created_at').notNull(),
     updatedAt: text('updated_at').notNull(),
   },
-  (table) => [uniqueIndex('action_intents_idempotency_unique').on(table.idempotencyKey)],
+  (table) => [
+    uniqueIndex('action_intents_team_idempotency_unique').on(table.teamId, table.idempotencyKey),
+  ],
 );
 
 export const automationRuns = sqliteTable('automation_runs', {
@@ -88,7 +90,45 @@ export const automationRuns = sqliteTable('automation_runs', {
   status: text('status').notNull(),
   runJson: text('run_json').notNull(),
   scheduledFor: text('scheduled_for').notNull(),
+  startedAt: text('started_at'),
+  finishedAt: text('finished_at'),
+  errorCode: text('error_code'),
 });
+
+export const actionExecutionResults = sqliteTable(
+  'action_execution_results',
+  {
+    id: text('id').primaryKey(),
+    teamId: text('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    actionIntentId: text('action_intent_id')
+      .notNull()
+      .references(() => actionIntents.id, { onDelete: 'cascade' }),
+    idempotencyKey: text('idempotency_key').notNull(),
+    outcome: text('outcome').notNull(),
+    resultJson: text('result_json').notNull(),
+    createdAt: text('created_at').notNull(),
+    updatedAt: text('updated_at').notNull(),
+  },
+  (table) => [
+    uniqueIndex('action_results_team_idempotency_unique').on(table.teamId, table.idempotencyKey),
+  ],
+);
+
+export const jobLeases = sqliteTable(
+  'job_leases',
+  {
+    teamId: text('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    jobType: text('job_type').notNull(),
+    ownerId: text('owner_id').notNull(),
+    acquiredAt: text('acquired_at').notNull(),
+    expiresAt: text('expires_at').notNull(),
+  },
+  (table) => [uniqueIndex('job_leases_team_job_unique').on(table.teamId, table.jobType)],
+);
 
 export const codexThreads = sqliteTable(
   'codex_threads',

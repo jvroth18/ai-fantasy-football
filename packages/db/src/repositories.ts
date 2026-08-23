@@ -1,4 +1,5 @@
 import {
+  automationPolicySchema,
   leagueRuleSetV1Schema,
   teamConfigV1Schema,
   type LeagueRuleSetV1,
@@ -61,6 +62,44 @@ export class TeamRepository {
   getById(teamId: string): TeamConfigV1 | null {
     const row = this.db.select().from(teams).where(eq(teams.id, teamId)).get();
     return row ? toTeam(row) : null;
+  }
+
+  update(input: TeamConfigV1): TeamConfigV1 {
+    const team = teamConfigV1Schema.parse(input);
+    const result = this.db
+      .update(teams)
+      .set({
+        name: team.name,
+        timeZone: team.timeZone,
+        color: team.color,
+        espnLeagueId: team.espnLeagueId,
+        espnTeamId: team.espnTeamId,
+        activeRuleSetId: team.activeRuleSetId,
+        strategyProfileId: team.strategyProfileId,
+        automationJson: JSON.stringify(team.automation),
+        updatedAt: team.updatedAt,
+      })
+      .where(eq(teams.id, team.id))
+      .run();
+    if (result.changes !== 1) throw new Error('Team not found');
+    return team;
+  }
+
+  updateAutomation(
+    teamId: string,
+    automation: TeamConfigV1['automation'],
+    updatedAt: string,
+  ): TeamConfigV1 {
+    const parsed = automationPolicySchema.parse(automation);
+    const result = this.db
+      .update(teams)
+      .set({ automationJson: JSON.stringify(parsed), updatedAt })
+      .where(eq(teams.id, teamId))
+      .run();
+    if (result.changes !== 1) throw new Error('Team not found');
+    const team = this.getById(teamId);
+    if (!team) throw new Error('Team disappeared during automation update');
+    return team;
   }
 
   activateRuleSet(teamId: string, ruleSetId: string, updatedAt: string): TeamConfigV1 {
