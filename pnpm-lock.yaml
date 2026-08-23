@@ -131,6 +131,18 @@ importers:
         specifier: latest
         version: 4.4.3
 
+  packages/espn:
+    dependencies:
+      '@ai-ff/codex':
+        specifier: workspace:*
+        version: link:../codex
+      '@ai-ff/domain':
+        specifier: workspace:*
+        version: link:../domain
+      zod:
+        specifier: latest
+        version: 4.4.3
+
   packages/rules:
     dependencies:
       '@ai-ff/domain':
