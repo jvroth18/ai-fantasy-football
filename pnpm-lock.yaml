@@ -152,6 +152,18 @@ importers:
         specifier: latest
         version: 4.4.3
 
+  packages/workflows:
+    dependencies:
+      '@ai-ff/data':
+        specifier: workspace:*
+        version: link:../data
+      '@ai-ff/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@ai-ff/rules':
+        specifier: workspace:*
+        version: link:../rules
+
 packages:
 
   '@adobe/css-tools@4.5.0':

@@ -28,6 +28,8 @@ Codex authentication stays in the CLI; the readiness check reports only an accou
 
 ESPN mutations are disabled by default and developed against a deterministic portal simulator. The live adapter uses visible Computer Use only—never private ESPN endpoints—and every action follows a read, policy check, single attempt, and read-back proof. See [docs/ESPN_AUTOMATION.md](docs/ESPN_AUTOMATION.md).
 
+The football decision layer ranks draft picks, optimizes legal lineups, pairs adds with safe drops and bounded FAAB, escalates player news, and constructs mutually useful market-fair trade ideas. See [docs/DECISION_ENGINES.md](docs/DECISION_ENGINES.md).
+
 ## Verification
 
 ```bash
