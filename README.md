@@ -45,6 +45,8 @@ The local scheduler runs team-specific refresh and management jobs in each leagu
 
 Team onboarding, rule upload/review, strategy configuration, automation arming, and manual management runs are exposed through the loopback-only daemon API. Uploaded binary rule files are held only long enough for a read-only Codex extraction turn and then removed. See [docs/LOCAL_DAEMON.md](docs/LOCAL_DAEMON.md).
 
+The player-intelligence directory compiles three-season performance, opportunity, roster-market momentum, and attributed news attention into transparent independent rankings. Reviews are searchable in the web app and exportable as a versioned JSON/JSONL handoff for another AI agent. See [docs/PLAYER_INTELLIGENCE.md](docs/PLAYER_INTELLIGENCE.md).
+
 ## Verification
 
 ```bash

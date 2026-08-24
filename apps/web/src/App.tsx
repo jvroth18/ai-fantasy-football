@@ -24,6 +24,7 @@ import type { LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 
 import { api, ApiError } from './api.js';
+import { PlayerRankings } from './PlayerRankings.js';
 import { AutomationPanel } from './components/AutomationPanel.js';
 import { CreateTeamForm } from './components/CreateTeamForm.js';
 import { RulesPanel } from './components/RulesPanel.js';
@@ -38,12 +39,21 @@ import type {
 } from './types.js';
 
 type Tab =
-  'command' | 'draft' | 'roster' | 'waivers' | 'trades' | 'rules' | 'strategy' | 'automation';
+  | 'command'
+  | 'draft'
+  | 'roster'
+  | 'players'
+  | 'waivers'
+  | 'trades'
+  | 'rules'
+  | 'strategy'
+  | 'automation';
 
 const navigation: Array<{ id: Tab; label: string; icon: LucideIcon }> = [
   { id: 'command', label: 'Command center', icon: LayoutDashboard },
   { id: 'draft', label: 'Draft room', icon: Trophy },
   { id: 'roster', label: 'Roster', icon: Users },
+  { id: 'players', label: 'Player rankings', icon: Database },
   { id: 'waivers', label: 'Waivers', icon: ListPlus },
   { id: 'trades', label: 'Trade desk', icon: Scale },
   { id: 'rules', label: 'League rules', icon: FileText },
@@ -473,6 +483,7 @@ export function App() {
             {tab === 'roster' ? (
               <RosterPanel detail={selectedDetail} busy={busy === 'espn-sync'} onSync={syncEspn} />
             ) : null}
+            {tab === 'players' ? <PlayerRankings /> : null}
             {tab === 'draft' ? (
               <DecisionDesk
                 kind="draft"

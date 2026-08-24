@@ -51,4 +51,32 @@ describe('Sleeper provider', () => {
       },
     ]);
   });
+
+  it('keeps duplicate upstream players without guessing ambiguous provider ids', async () => {
+    const provider = new SleeperProvider(
+      async () =>
+        Response.json({
+          '100': {
+            player_id: '100',
+            full_name: 'First Player',
+            position: 'RB',
+            active: true,
+            espn_id: 123,
+          },
+          '200': {
+            player_id: '200',
+            full_name: 'Second Player',
+            position: 'WR',
+            active: true,
+            espn_id: 123,
+          },
+        }),
+      now,
+    );
+
+    const snapshot = await provider.fetchPlayers();
+    expect(snapshot.records).toHaveLength(2);
+    expect(snapshot.records.every((player) => player.espnId === null)).toBe(true);
+    expect(snapshot.records.every((player) => player.mappingConfidence === 0.7)).toBe(true);
+  });
 });

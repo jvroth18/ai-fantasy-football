@@ -129,6 +129,9 @@ importers:
       '@ai-ff/domain':
         specifier: workspace:*
         version: link:../domain
+      csv-parse:
+        specifier: latest
+        version: 7.0.2
       fast-xml-parser:
         specifier: latest
         version: 5.11.0
@@ -138,6 +141,9 @@ importers:
 
   packages/db:
     dependencies:
+      '@ai-ff/data':
+        specifier: workspace:*
+        version: link:../data
       '@ai-ff/domain':
         specifier: workspace:*
         version: link:../domain
@@ -1313,6 +1319,9 @@ packages:
 
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
+
+  csv-parse@7.0.2:
+    resolution: {integrity: sha512-uKZghv9UmPkMVLYy//KZ9HFAIJsl7wkhoEdIL0+rhuSY9pZQlhaeGEDPIe+/w7eh81MOql8Q/9+inAGWG6ZHYA==}
 
   data-urls@7.0.0:
     resolution: {integrity: sha512-23XHcCF+coGYevirZceTVD7NdJOqVn+49IHyxgszm+JIiHLoB2TkmPtsYkNWT1pvRSGkc35L6NHs0yHkN2SumA==}
@@ -3297,6 +3306,8 @@ snapshots:
   css.escape@1.5.1: {}
 
   csstype@3.2.3: {}
+
+  csv-parse@7.0.2: {}
 
   data-urls@7.0.0:
     dependencies:

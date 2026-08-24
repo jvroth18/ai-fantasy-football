@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Fantasy Player Intelligence'
+  short_description: 'Compile and hand off fantasy player rankings'
+  default_prompt: 'Use $fantasy-player-intelligence to refresh and explain the source-backed player rankings, then export an AI handoff bundle.'

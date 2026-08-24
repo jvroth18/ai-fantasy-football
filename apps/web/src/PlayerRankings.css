@@ -1,0 +1,199 @@
+.player-intelligence {
+  display: grid;
+  gap: 18px;
+}
+.ranking-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 30px;
+}
+.ranking-heading h2 {
+  margin: 8px 0;
+  font-size: 34px;
+  letter-spacing: -0.04em;
+}
+.ranking-heading > div > p:last-child {
+  max-width: 670px;
+  margin: 0;
+  color: #8da99a;
+  line-height: 1.6;
+}
+.ranking-filters,
+.export-button,
+.ranking-filters label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.export-button,
+.ranking-filters label,
+.ranking-filters select {
+  padding: 10px 12px;
+  color: #dff7e6;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #0d1d16;
+}
+.export-button {
+  color: var(--team-accent);
+  border-color: var(--team-accent);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.ranking-filters input {
+  width: 150px;
+  color: inherit;
+  border: 0;
+  outline: 0;
+  background: transparent;
+}
+.ranking-state,
+.ranking-table-wrap {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.ranking-state {
+  padding: 28px;
+  color: #8da99a;
+}
+.ranking-table-wrap {
+  overflow: auto;
+  background: rgba(13, 29, 22, 0.82);
+}
+.ranking-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+.ranking-table th,
+.ranking-table td {
+  padding: 12px 16px;
+  text-align: left;
+}
+.ranking-table th {
+  color: #779285;
+  font:
+    500 10px ui-monospace,
+    monospace;
+  letter-spacing: 0.1em;
+}
+.ranking-table td {
+  color: #c7ddcf;
+  border-top: 1px solid var(--line);
+}
+.ranking-table td b,
+.ranking-table td small {
+  display: block;
+}
+.ranking-table td small {
+  margin-top: 3px;
+  color: #688477;
+  font:
+    500 10px ui-monospace,
+    monospace;
+}
+.ranking-table td strong {
+  color: var(--team-accent);
+  font-size: 18px;
+}
+.ranking-table button {
+  display: grid;
+  place-items: center;
+  padding: 7px;
+  color: #dff7e6;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+.trend {
+  font:
+    500 12px ui-monospace,
+    monospace;
+}
+.trend svg {
+  vertical-align: middle;
+}
+.trend.rising {
+  color: var(--success);
+}
+.trend.falling {
+  color: var(--danger);
+}
+.review-backdrop {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.62);
+}
+.review-drawer {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: min(560px, 100%);
+  padding: 50px 42px;
+  overflow: auto;
+  border-left: 1px solid var(--line);
+  background: #0a1711;
+  box-shadow: -30px 0 80px rgba(0, 0, 0, 0.35);
+}
+.review-drawer h2 {
+  margin: 10px 0 16px;
+  font-size: 42px;
+  letter-spacing: -0.05em;
+}
+.review-drawer > p:not(.kicker):not(.source-list),
+.review-drawer li {
+  color: #a9c5b2;
+  line-height: 1.65;
+}
+.review-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  color: #dff7e6;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.score-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 28px 0;
+}
+.score-grid span,
+.season-history span {
+  padding: 10px 12px;
+  color: #799587;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.score-grid b {
+  display: block;
+  color: var(--team-accent);
+  font-size: 20px;
+}
+.season-history {
+  display: grid;
+  gap: 6px;
+}
+.season-history span {
+  display: flex;
+  justify-content: space-between;
+}
+.source-list {
+  margin-top: 28px;
+  color: #688477;
+  font-size: 12px;
+}
+.source-list a {
+  color: var(--success);
+}
+@media (max-width: 850px) {
+  .ranking-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

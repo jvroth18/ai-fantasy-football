@@ -7,6 +7,7 @@ import {
   DataSnapshotRepository,
   openDatabase,
   PortalSnapshotRepository,
+  PlayerIntelligenceRepository,
   RecommendationRepository,
   RuleSetRepository,
   StrategyRepository,
@@ -70,6 +71,14 @@ const uploadSchema = z.object({
   mimeType: z.enum(supportedRuleMimeTypes),
   contentBase64: z.string().min(1),
 });
+const playerListQuerySchema = z.object({
+  position: z.enum(['QB', 'RB', 'WR', 'TE', 'K', 'DST']).optional(),
+  search: z.string().max(100).optional(),
+  limit: z.coerce.number().int().min(1).max(500).default(200),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+const playerParamsSchema = z.object({ playerId: z.string().uuid() });
+const playerExportQuerySchema = z.object({ format: z.enum(['json', 'jsonl']).default('json') });
 
 export type ServerOptions = {
   logger?: boolean;
@@ -135,6 +144,7 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
   const runs = new AutomationRunRepository(database.db);
   const snapshots = new DataSnapshotRepository(database.db);
   const portalSnapshots = new PortalSnapshotRepository(database.db);
+  const playerIntelligence = new PlayerIntelligenceRepository(database.db);
   const ruleImports = new RuleImportService(teams, ruleSets, options.ruleExtractor ?? null, now);
 
   await app.register(cors, {
@@ -231,6 +241,63 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
   });
 
   app.get('/api/teams', async () => teams.list());
+
+  app.get('/api/players', async (request) => {
+    const query = playerListQuerySchema.parse(request.query);
+    return {
+      reviews: playerIntelligence.listReviews({
+        limit: query.limit,
+        offset: query.offset,
+        ...(query.position ? { position: query.position } : {}),
+        ...(query.search ? { search: query.search } : {}),
+      }),
+      limit: query.limit,
+      offset: query.offset,
+    };
+  });
+
+  app.get('/api/players/:playerId', async (request, reply) => {
+    const { playerId } = playerParamsSchema.parse(request.params);
+    const review = playerIntelligence.getReview(playerId);
+    return review ?? (await reply.code(404).send({ error: 'PLAYER_REVIEW_NOT_FOUND' }));
+  });
+
+  app.get('/api/player-intelligence/export', async (request, reply) => {
+    const { format } = playerExportQuerySchema.parse(request.query);
+    const reviews = playerIntelligence.listReviews({ limit: 5_000 });
+    const generatedAt = reviews[0]?.generatedAt ?? now().toISOString();
+    const manifest = {
+      schemaVersion: 1,
+      kind: 'ai-fantasy-football.player-intelligence-handoff',
+      generatedAt,
+      playerCount: reviews.length,
+      methodology: {
+        score: {
+          historicalProduction: 0.55,
+          recentOpportunity: 0.2,
+          sleeperRosterMomentum: 0.15,
+          attributedNewsBuzz: 0.1,
+        },
+        history: 'Three most recent completed NFL regular seasons, weighted 62/25/13 percent',
+        warning:
+          'Rankings are decision support, not facts. Buzz measures attention, not player quality.',
+      },
+    };
+    reply.header(
+      'content-disposition',
+      `attachment; filename="player-intelligence-${generatedAt.slice(0, 10)}.${format}"`,
+    );
+    if (format === 'jsonl') {
+      reply.type('application/x-ndjson');
+      return (
+        [
+          JSON.stringify({ recordType: 'manifest', ...manifest }),
+          ...reviews.map((review) => JSON.stringify({ recordType: 'player', ...review })),
+        ].join('\n') + '\n'
+      );
+    }
+    return { ...manifest, players: reviews };
+  });
 
   app.post('/api/teams', async (request, reply) => {
     const input = createTeamSchema.parse(request.body);

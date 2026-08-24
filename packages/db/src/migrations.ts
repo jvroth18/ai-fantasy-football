@@ -192,6 +192,30 @@ const migrations = [
         ON portal_snapshots(team_id, observed_at DESC);
     `,
   },
+  {
+    version: 5,
+    sql: `
+      CREATE TABLE player_season_stats (
+        gsis_id TEXT NOT NULL,
+        season INTEGER NOT NULL,
+        stats_json TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        UNIQUE (gsis_id, season)
+      );
+      CREATE INDEX player_season_stats_season_idx ON player_season_stats(season DESC);
+      CREATE TABLE player_reviews (
+        player_id TEXT PRIMARY KEY REFERENCES player_identities(id) ON DELETE CASCADE,
+        overall_rank INTEGER NOT NULL,
+        position TEXT NOT NULL,
+        position_rank INTEGER NOT NULL,
+        score_basis_points INTEGER NOT NULL,
+        review_json TEXT NOT NULL,
+        generated_at TEXT NOT NULL
+      );
+      CREATE INDEX player_reviews_overall_rank_idx ON player_reviews(overall_rank);
+      CREATE INDEX player_reviews_position_rank_idx ON player_reviews(position, position_rank);
+    `,
+  },
 ] as const;
 
 export function applyMigrations(database: Database.Database): void {

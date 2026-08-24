@@ -63,13 +63,14 @@ export class SleeperProvider {
       .filter((player) => !activeOnly || player.active !== false)
       .map((player) => this.normalizePlayer(player, fetchedAt))
       .filter((player): player is PlayerIdentityV1 => player !== null);
+    const unambiguousRecords = removeAmbiguousExternalIds(records);
 
     return {
       provider: sleeperMetadata,
       fetchedAt,
       sourceUrl: url,
       digest: digestJson(raw),
-      records,
+      records: unambiguousRecords,
     };
   }
 
@@ -115,4 +116,29 @@ export class SleeperProvider {
       updatedAt,
     });
   }
+}
+
+function removeAmbiguousExternalIds(players: PlayerIdentityV1[]): PlayerIdentityV1[] {
+  const counts = new Map<string, number>();
+  for (const player of players) {
+    for (const [provider, value] of [
+      ['espn', player.espnId],
+      ['gsis', player.gsisId],
+    ] as const) {
+      if (value) counts.set(`${provider}:${value}`, (counts.get(`${provider}:${value}`) ?? 0) + 1);
+    }
+  }
+  return players.map((player) => {
+    const espnId =
+      player.espnId && counts.get(`espn:${player.espnId}`) === 1 ? player.espnId : null;
+    const gsisId =
+      player.gsisId && counts.get(`gsis:${player.gsisId}`) === 1 ? player.gsisId : null;
+    if (espnId === player.espnId && gsisId === player.gsisId) return player;
+    return playerIdentityV1Schema.parse({
+      ...player,
+      espnId,
+      gsisId,
+      mappingConfidence: Math.min(player.mappingConfidence, 0.7),
+    });
+  });
 }

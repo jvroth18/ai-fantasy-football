@@ -186,6 +186,36 @@ export const newsItems = sqliteTable('news_items', {
   fetchedAt: text('fetched_at').notNull(),
 });
 
+export const playerSeasonStats = sqliteTable(
+  'player_season_stats',
+  {
+    gsisId: text('gsis_id').notNull(),
+    season: integer('season').notNull(),
+    statsJson: text('stats_json').notNull(),
+    updatedAt: text('updated_at').notNull(),
+  },
+  (table) => [uniqueIndex('player_season_stats_identity_unique').on(table.gsisId, table.season)],
+);
+
+export const playerReviews = sqliteTable(
+  'player_reviews',
+  {
+    playerId: text('player_id')
+      .primaryKey()
+      .references(() => playerIdentities.id, { onDelete: 'cascade' }),
+    overallRank: integer('overall_rank').notNull(),
+    position: text('position').notNull(),
+    positionRank: integer('position_rank').notNull(),
+    scoreBasisPoints: integer('score_basis_points').notNull(),
+    reviewJson: text('review_json').notNull(),
+    generatedAt: text('generated_at').notNull(),
+  },
+  (table) => [
+    index('player_reviews_overall_rank_idx').on(table.overallRank),
+    index('player_reviews_position_rank_idx').on(table.position, table.positionRank),
+  ],
+);
+
 export const portalSnapshots = sqliteTable(
   'portal_snapshots',
   {

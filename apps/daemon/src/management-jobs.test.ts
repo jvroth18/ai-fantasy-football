@@ -109,9 +109,35 @@ describe('management job handlers', () => {
         },
       ],
     }));
+    const fetchPlayerSeasonStats = vi.fn(async (season: number) => ({
+      provider: {
+        id: 'nflverse',
+        displayName: 'nflverse',
+        license: 'test',
+        termsUrl: 'https://github.com/nflverse/nflverse-data',
+        minimumRefreshMinutes: 360,
+      },
+      fetchedAt: now,
+      sourceUrl: `https://example.com/stats-${season}.csv`,
+      digest: String(season).padEnd(64, '0'),
+      records: [
+        {
+          gsisId: '00-1',
+          season,
+          games: 17,
+          fantasyPoints: 200,
+          fantasyPointsPpr: 230,
+          passingAttempts: 0,
+          carries: 220,
+          targets: 55,
+          receptions: 45,
+          touchdowns: 10,
+        },
+      ],
+    }));
     const jobs = new ManagementJobs(handle.db, {
       sleeper: { fetchPlayers, fetchTrending } as unknown as SleeperProvider,
-      nflverse: { listAssets } as unknown as NflverseProvider,
+      nflverse: { listAssets, fetchPlayerSeasonStats } as unknown as NflverseProvider,
       feeds: [],
       now: () => new Date(now),
     });
@@ -124,6 +150,7 @@ describe('management job handlers', () => {
     expect(fetchPlayers).toHaveBeenCalledOnce();
     expect(fetchTrending).toHaveBeenCalledTimes(2);
     expect(listAssets).toHaveBeenCalledTimes(9);
+    expect(fetchPlayerSeasonStats).toHaveBeenCalledTimes(3);
     expect(new PlayerRepository(handle.db).list()).toHaveLength(1);
     expect(new DataSnapshotRepository(handle.db).latest('nflverse')?.recordCount).toBe(9);
   });

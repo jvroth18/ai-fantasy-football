@@ -1,8 +1,16 @@
+import type { PlayerReview, PlayerSeasonStats } from '@ai-ff/data';
 import { playerIdentityV1Schema, type PlayerIdentityV1 } from '@ai-ff/domain';
-import { asc, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, like } from 'drizzle-orm';
 
 import type { AppDatabase } from './database.js';
-import { dataSnapshots, newsItems, playerIdentities, portalSnapshots } from './schema.js';
+import {
+  dataSnapshots,
+  newsItems,
+  playerIdentities,
+  playerReviews,
+  playerSeasonStats,
+  portalSnapshots,
+} from './schema.js';
 
 export type StoredDataSnapshot = typeof dataSnapshots.$inferSelect;
 
@@ -108,6 +116,87 @@ export class NewsRepository {
 
   listRecent(limit = 200): Array<typeof newsItems.$inferSelect> {
     return this.db.select().from(newsItems).orderBy(desc(newsItems.publishedAt)).limit(limit).all();
+  }
+}
+
+export class PlayerIntelligenceRepository {
+  constructor(private readonly db: AppDatabase) {}
+
+  upsertSeasonStats(records: PlayerSeasonStats[], updatedAt: string): number {
+    this.db.transaction((transaction) => {
+      for (const record of records) {
+        transaction
+          .insert(playerSeasonStats)
+          .values({
+            gsisId: record.gsisId,
+            season: record.season,
+            statsJson: JSON.stringify(record),
+            updatedAt,
+          })
+          .onConflictDoUpdate({
+            target: [playerSeasonStats.gsisId, playerSeasonStats.season],
+            set: { statsJson: JSON.stringify(record), updatedAt },
+          })
+          .run();
+      }
+    });
+    return records.length;
+  }
+
+  listSeasonStats(): PlayerSeasonStats[] {
+    return this.db
+      .select()
+      .from(playerSeasonStats)
+      .orderBy(desc(playerSeasonStats.season))
+      .all()
+      .map((row) => JSON.parse(row.statsJson) as PlayerSeasonStats);
+  }
+
+  replaceReviews(reviews: PlayerReview[]): number {
+    this.db.transaction((transaction) => {
+      transaction.delete(playerReviews).run();
+      for (const review of reviews) {
+        transaction
+          .insert(playerReviews)
+          .values({
+            playerId: review.playerId,
+            overallRank: review.overallRank,
+            position: review.position,
+            positionRank: review.positionRank,
+            scoreBasisPoints: Math.round(review.score * 100),
+            reviewJson: JSON.stringify(review),
+            generatedAt: review.generatedAt,
+          })
+          .run();
+      }
+    });
+    return reviews.length;
+  }
+
+  listReviews(
+    options: { position?: string; search?: string; limit?: number; offset?: number } = {},
+  ): PlayerReview[] {
+    const conditions = [];
+    if (options.position) conditions.push(eq(playerReviews.position, options.position));
+    if (options.search) conditions.push(like(playerIdentities.fullName, `%${options.search}%`));
+    const query = this.db
+      .select({ reviewJson: playerReviews.reviewJson })
+      .from(playerReviews)
+      .innerJoin(playerIdentities, eq(playerIdentities.id, playerReviews.playerId))
+      .where(conditions.length ? and(...conditions) : undefined)
+      .orderBy(asc(playerReviews.overallRank))
+      .limit(Math.min(options.limit ?? 200, 5_000))
+      .offset(options.offset ?? 0);
+    return query.all().map((row) => JSON.parse(row.reviewJson) as PlayerReview);
+  }
+
+  getReview(playerId: string): PlayerReview | null {
+    const row = this.db
+      .select()
+      .from(playerReviews)
+      .where(eq(playerReviews.playerId, playerId))
+      .get();
+    return row ? (JSON.parse(row.reviewJson) as PlayerReview) : null;
   }
 }
 

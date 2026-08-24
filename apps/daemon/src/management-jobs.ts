@@ -1,7 +1,8 @@
 import { createHash, randomUUID } from 'node:crypto';
 
-import type { NewsFeed } from '@ai-ff/data';
+import type { NewsFeed, NewsItem, SleeperTrend } from '@ai-ff/data';
 import {
+  compilePlayerReviews,
   NflverseProvider,
   RssNewsProvider,
   SleeperProvider,
@@ -10,6 +11,7 @@ import {
 import {
   DataSnapshotRepository,
   NewsRepository,
+  PlayerIntelligenceRepository,
   PlayerRepository,
   RuleSetRepository,
   StrategyRepository,
@@ -23,7 +25,7 @@ export const defaultNewsFeeds: NewsFeed[] = [
 ];
 
 type SleeperSource = Pick<SleeperProvider, 'fetchPlayers' | 'fetchTrending'>;
-type NflverseSource = Pick<NflverseProvider, 'listAssets'>;
+type NflverseSource = Pick<NflverseProvider, 'listAssets' | 'fetchPlayerSeasonStats'>;
 type NewsSource = Pick<RssNewsProvider, 'fetchFeed'>;
 
 export type TeamAnalysis = (
@@ -54,6 +56,7 @@ export class ManagementJobs {
   readonly #players: PlayerRepository;
   readonly #snapshots: DataSnapshotRepository;
   readonly #newsItems: NewsRepository;
+  readonly #intelligence: PlayerIntelligenceRepository;
   readonly #rules: RuleSetRepository;
   readonly #strategies: StrategyRepository;
   readonly #sleeper: SleeperSource;
@@ -67,6 +70,7 @@ export class ManagementJobs {
     this.#players = new PlayerRepository(database);
     this.#snapshots = new DataSnapshotRepository(database);
     this.#newsItems = new NewsRepository(database);
+    this.#intelligence = new PlayerIntelligenceRepository(database);
     this.#rules = new RuleSetRepository(database);
     this.#strategies = new StrategyRepository(database);
     this.#sleeper = options.sleeper ?? new SleeperProvider();
@@ -136,10 +140,25 @@ export class ManagementJobs {
         }),
       });
       messages.push(`${assets.length} nflverse assets cataloged`);
+
+      const completedSeason = now.getUTCFullYear() - 1;
+      const history = await Promise.all(
+        [completedSeason, completedSeason - 1, completedSeason - 2].map(
+          async (season) => await this.#nflverse.fetchPlayerSeasonStats(season),
+        ),
+      );
+      for (const snapshot of history) {
+        this.#intelligence.upsertSeasonStats(snapshot.records, snapshot.fetchedAt);
+      }
+      messages.push(
+        `${history.reduce((sum, snapshot) => sum + snapshot.records.length, 0)} player-season rows`,
+      );
     } else {
       messages.push('nflverse catalog still fresh');
     }
 
+    const reviewCount = this.rebuildReviews(now);
+    messages.push(`${reviewCount} player reviews ranked`);
     return { status: 'verified', message: messages.join('; ') };
   }
 
@@ -182,7 +201,27 @@ export class ManagementJobs {
       fetchedAt: now.toISOString(),
       metadataJson: JSON.stringify({ feeds: this.#feeds, itemIds: records.map((item) => item.id) }),
     });
-    return { status: 'verified', message: `${records.length} news items refreshed` };
+    const reviewCount = this.rebuildReviews(now);
+    return {
+      status: 'verified',
+      message: `${records.length} news items refreshed; ${reviewCount} player reviews updated`,
+    };
+  }
+
+  private rebuildReviews(now: Date): number {
+    const sleeper = this.#snapshots.latest('sleeper');
+    const metadata = sleeper
+      ? (JSON.parse(sleeper.metadataJson) as { adds?: SleeperTrend[]; drops?: SleeperTrend[] })
+      : {};
+    const news = this.#newsItems.listRecent(500).map((row) => JSON.parse(row.newsJson) as NewsItem);
+    const reviews = compilePlayerReviews({
+      players: this.#players.list(),
+      stats: this.#intelligence.listSeasonStats(),
+      trends: [...(metadata.adds ?? []), ...(metadata.drops ?? [])],
+      news,
+      now,
+    });
+    return this.#intelligence.replaceReviews(reviews);
   }
 
   async analyze(
