@@ -25,6 +25,7 @@ export class CodexEspnPortalAdapter implements EspnPortalAdapter {
         'This is observation only: do not click any control that submits or changes data.',
         `Confirm the visible league ID is ${binding.leagueId} and team ID is ${binding.teamId}.`,
         'Read the current roster with visible injury/availability status, available players with waiver/free-agent status and rostered percentage, pending waivers, outgoing trades, draft state and draft slot.',
+        'When reading available players, collect at most the top 60 sorted by ESPN projected points when that sort is visible.',
         'Read visible remaining FAAB and this-week FAAB spend. Use null when ESPN does not display either value.',
         'Read each visible opponent team roster for trade analysis. Put opponents in leagueTeams and exclude the configured team.',
         'If a field cannot be verified from visible UI, use unknown or null where the schema permits it; never infer portal state.',

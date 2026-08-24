@@ -16,10 +16,12 @@ import { z } from 'zod';
 
 import { buildServer } from './app.js';
 import { CodexClientManager } from './codex-manager.js';
+import { CodexPlayerValueService, type PlayerValueProvider } from './codex-player-values.js';
 import { CodexRuleExtractorService } from './codex-rule-extractor.js';
 import { defaultNewsFeeds, ManagementJobs } from './management-jobs.js';
 import type { CodexRuleExtractor } from './rule-import-service.js';
 import { EspnSnapshotService } from './espn-snapshot-service.js';
+import { TeamDecisionOrchestrator } from './team-decision-orchestrator.js';
 
 const host = process.env.AI_FF_HOST ?? '127.0.0.1';
 const port = Number(process.env.AI_FF_PORT ?? 4318);
@@ -33,10 +35,6 @@ const database = openDatabase(databasePath);
 const teams = new TeamRepository(database.db);
 const runs = new AutomationRunRepository(database.db);
 const leases = new JobLeaseRepository(database.db);
-const management = new ManagementJobs(database.db, { feeds: configuredNewsFeeds() });
-const definitions = defineManagementJobs(management.handlers());
-const runner = new DurableJobRunner(runs, leases);
-const scheduler = new LocalTeamScheduler(teams, runner, definitions);
 const codex = new CodexClientManager();
 const uploadRoot = join(workspaceRoot, 'var', 'rule-uploads');
 const ruleExtractor: CodexRuleExtractor = {
@@ -47,29 +45,45 @@ const ruleExtractor: CodexRuleExtractor = {
       uploadRoot,
     ).extract(source, team),
 };
-const espnSnapshots = {
-  sync: async (team: TeamConfigV1) => {
-    const client = await codex.client(workspaceRoot);
-    const readiness = await client.readiness(workspaceRoot);
-    if (!readiness.readyForEspn) {
-      throw new Error(`CODEX_ESPN_UNAVAILABLE: ${readiness.issues.join('; ')}`);
-    }
-    const thread = await client.startDecisionThread({
-      cwd: workspaceRoot,
-      ephemeral: true,
-      baseInstructions: [
-        'Observe the authenticated ESPN Fantasy Football portal through visible Computer Use only.',
-        'Never call private or undocumented ESPN endpoints.',
-        'Never submit, save, draft, claim, drop, trade, or otherwise mutate ESPN state.',
-        'Never expose credentials, cookies, tokens, personal account details, or screenshots in output.',
-      ].join('\n'),
-    });
-    return await new EspnSnapshotService(
-      new PortalSnapshotRepository(database.db),
-      new CodexEspnPortalAdapter(client, thread.threadId),
-    ).sync(team);
-  },
+async function syncEspnSnapshot(team: TeamConfigV1) {
+  const client = await codex.client(workspaceRoot);
+  const readiness = await client.readiness(workspaceRoot);
+  if (!readiness.readyForEspn) {
+    throw new Error(`CODEX_ESPN_UNAVAILABLE: ${readiness.issues.join('; ')}`);
+  }
+  const thread = await client.startDecisionThread({
+    cwd: workspaceRoot,
+    ephemeral: true,
+    baseInstructions: [
+      'Observe the authenticated ESPN Fantasy Football portal through visible Computer Use only.',
+      'Never call private or undocumented ESPN endpoints.',
+      'Never submit, save, draft, claim, drop, trade, or otherwise mutate ESPN state.',
+      'Never expose credentials, cookies, tokens, personal account details, or screenshots in output.',
+    ].join('\n'),
+  });
+  return await new EspnSnapshotService(
+    new PortalSnapshotRepository(database.db),
+    new CodexEspnPortalAdapter(client, thread.threadId),
+  ).sync(team);
+}
+const playerValues: PlayerValueProvider = {
+  valuePlayers: async (request) =>
+    await new CodexPlayerValueService(
+      await codex.client(workspaceRoot),
+      workspaceRoot,
+    ).valuePlayers(request),
 };
+const decisions = new TeamDecisionOrchestrator(database.db, playerValues, {
+  syncPortal: syncEspnSnapshot,
+});
+const management = new ManagementJobs(database.db, {
+  feeds: configuredNewsFeeds(),
+  analyzeTeam: async (team, jobType) => await decisions.analyze(team, jobType),
+});
+const definitions = defineManagementJobs(management.handlers());
+const runner = new DurableJobRunner(runs, leases);
+const scheduler = new LocalTeamScheduler(teams, runner, definitions);
+const espnSnapshots = { sync: syncEspnSnapshot };
 
 await scheduler.start(false);
 const app = await buildServer({
