@@ -15,6 +15,7 @@
     "@ai-ff/data": "workspace:*",
     "@ai-ff/db": "workspace:*",
     "@ai-ff/domain": "workspace:*",
+    "@ai-ff/espn": "workspace:*",
     "@ai-ff/rules": "workspace:*",
     "@ai-ff/scheduler": "workspace:*",
     "@ai-ff/workflows": "workspace:*",

@@ -59,6 +59,9 @@ importers:
       '@ai-ff/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@ai-ff/espn':
+        specifier: workspace:*
+        version: link:../../packages/espn
       '@ai-ff/rules':
         specifier: workspace:*
         version: link:../../packages/rules

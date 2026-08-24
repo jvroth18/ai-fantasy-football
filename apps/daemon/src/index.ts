@@ -6,8 +6,11 @@ import {
   AutomationRunRepository,
   JobLeaseRepository,
   openDatabase,
+  PortalSnapshotRepository,
   TeamRepository,
 } from '@ai-ff/db';
+import type { TeamConfigV1 } from '@ai-ff/domain';
+import { CodexEspnPortalAdapter } from '@ai-ff/espn';
 import { defineManagementJobs, DurableJobRunner, LocalTeamScheduler } from '@ai-ff/scheduler';
 import { z } from 'zod';
 
@@ -16,6 +19,7 @@ import { CodexClientManager } from './codex-manager.js';
 import { CodexRuleExtractorService } from './codex-rule-extractor.js';
 import { defaultNewsFeeds, ManagementJobs } from './management-jobs.js';
 import type { CodexRuleExtractor } from './rule-import-service.js';
+import { EspnSnapshotService } from './espn-snapshot-service.js';
 
 const host = process.env.AI_FF_HOST ?? '127.0.0.1';
 const port = Number(process.env.AI_FF_PORT ?? 4318);
@@ -43,6 +47,29 @@ const ruleExtractor: CodexRuleExtractor = {
       uploadRoot,
     ).extract(source, team),
 };
+const espnSnapshots = {
+  sync: async (team: TeamConfigV1) => {
+    const client = await codex.client(workspaceRoot);
+    const readiness = await client.readiness(workspaceRoot);
+    if (!readiness.readyForEspn) {
+      throw new Error(`CODEX_ESPN_UNAVAILABLE: ${readiness.issues.join('; ')}`);
+    }
+    const thread = await client.startDecisionThread({
+      cwd: workspaceRoot,
+      ephemeral: true,
+      baseInstructions: [
+        'Observe the authenticated ESPN Fantasy Football portal through visible Computer Use only.',
+        'Never call private or undocumented ESPN endpoints.',
+        'Never submit, save, draft, claim, drop, trade, or otherwise mutate ESPN state.',
+        'Never expose credentials, cookies, tokens, personal account details, or screenshots in output.',
+      ].join('\n'),
+    });
+    return await new EspnSnapshotService(
+      new PortalSnapshotRepository(database.db),
+      new CodexEspnPortalAdapter(client, thread.threadId),
+    ).sync(team);
+  },
+};
 
 await scheduler.start(false);
 const app = await buildServer({
@@ -50,6 +77,7 @@ const app = await buildServer({
   database,
   scheduler,
   ruleExtractor,
+  espnSnapshots,
   codexReadiness: async () => await codex.readiness(workspaceRoot),
 });
 await app.listen({ host, port });

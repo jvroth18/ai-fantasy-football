@@ -6,6 +6,7 @@ import {
   AutomationRunRepository,
   DataSnapshotRepository,
   openDatabase,
+  PortalSnapshotRepository,
   RecommendationRepository,
   RuleSetRepository,
   StrategyRepository,
@@ -19,6 +20,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { z, ZodError } from 'zod';
 
 import { RuleImportService, type CodexRuleExtractor } from './rule-import-service.js';
+import { portalSnapshotView, type EspnSnapshotService } from './espn-snapshot-service.js';
 
 const teamParamsSchema = z.object({ teamId: z.string().uuid() });
 const ruleParamsSchema = teamParamsSchema.extend({ ruleSetId: z.string().uuid() });
@@ -75,6 +77,7 @@ export type ServerOptions = {
   scheduler?: Pick<LocalTeamScheduler, 'entries' | 'trigger'> &
     Partial<Pick<LocalTeamScheduler, 'start'>>;
   ruleExtractor?: CodexRuleExtractor | null;
+  espnSnapshots?: Pick<EspnSnapshotService, 'sync'> | null;
   codexReadiness?: (() => Promise<CodexReadiness>) | null;
   now?: () => Date;
 };
@@ -131,6 +134,7 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
   const recommendations = new RecommendationRepository(database.db);
   const runs = new AutomationRunRepository(database.db);
   const snapshots = new DataSnapshotRepository(database.db);
+  const portalSnapshots = new PortalSnapshotRepository(database.db);
   const ruleImports = new RuleImportService(teams, ruleSets, options.ruleExtractor ?? null, now);
 
   await app.register(cors, {
@@ -152,6 +156,18 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
     }
     if (message.includes('Codex rule extraction is not available')) {
       void reply.code(503).send({ error: 'CODEX_UNAVAILABLE', message });
+      return;
+    }
+    if (message.includes('CODEX_ESPN_UNAVAILABLE')) {
+      void reply.code(503).send({ error: 'CODEX_ESPN_UNAVAILABLE', message });
+      return;
+    }
+    if (message === 'ESPN_AUTH_REQUIRED' || message === 'ESPN_BINDING_MISMATCH') {
+      void reply.code(409).send({ error: message });
+      return;
+    }
+    if (message === 'ESPN_OBSERVATION_TIME_INVALID') {
+      void reply.code(422).send({ error: message });
       return;
     }
     if (
@@ -230,10 +246,12 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
     const strategy = team.strategyProfileId
       ? strategies.getForTeam(team.id, team.strategyProfileId)
       : null;
+    const latestPortalSnapshot = portalSnapshots.latestForTeam(teamId);
     return {
       team,
       rules: ruleSets.listForTeam(teamId),
       strategy,
+      espnSnapshot: latestPortalSnapshot ? portalSnapshotView(latestPortalSnapshot) : null,
       recommendations: recommendations.listActive(teamId, now().toISOString()),
       runs: runs.listRecent(teamId),
     };
@@ -316,6 +334,23 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
   app.get('/api/teams/:teamId/recommendations', async (request) => {
     const { teamId } = teamParamsSchema.parse(request.params);
     return recommendations.listActive(teamId, now().toISOString());
+  });
+
+  app.get('/api/teams/:teamId/espn/snapshot', async (request, reply) => {
+    const { teamId } = teamParamsSchema.parse(request.params);
+    if (!teams.getById(teamId)) return await reply.code(404).send({ error: 'NOT_FOUND' });
+    const snapshot = portalSnapshots.latestForTeam(teamId);
+    return snapshot ? portalSnapshotView(snapshot) : null;
+  });
+
+  app.post('/api/teams/:teamId/espn/sync', async (request, reply) => {
+    const { teamId } = teamParamsSchema.parse(request.params);
+    const team = teams.getById(teamId);
+    if (!team) return await reply.code(404).send({ error: 'NOT_FOUND' });
+    if (!options.espnSnapshots) {
+      return await reply.code(503).send({ error: 'CODEX_ESPN_UNAVAILABLE' });
+    }
+    return await options.espnSnapshots.sync(team);
   });
 
   app.get('/api/teams/:teamId/runs', async (request) => {

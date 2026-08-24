@@ -2,6 +2,12 @@
 
 ESPN has no supported public API for this application, so the live adapter uses Codex Computer Use against the user's existing browser session. It must not call undocumented ESPN endpoints, capture credentials, bypass login or MFA, or retry an uncertain submission.
 
+## Read-only roster sync
+
+`POST /api/teams/:teamId/espn/sync` starts an ephemeral, read-only Codex thread and observes the already-open ESPN portal through Computer Use. The observation is rejected unless the user is signed in, the visible league and team match the configured binding exactly, and the observation timestamp is current. This operation does not require or enable the team's mutation policy.
+
+Accepted observations are saved as team-scoped SQLite snapshots with a SHA-256 content digest. Every read reparses the typed snapshot and verifies that digest. `GET /api/teams/:teamId/espn/snapshot` returns the latest verified observation; snapshots never contain cookies, tokens, screenshots, or passwords.
+
 ## Execution state machine
 
 1. Create a typed action intent with a team-scoped idempotency key.

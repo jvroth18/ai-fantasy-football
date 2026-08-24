@@ -2,7 +2,7 @@ import { playerIdentityV1Schema, type PlayerIdentityV1 } from '@ai-ff/domain';
 import { asc, desc, eq } from 'drizzle-orm';
 
 import type { AppDatabase } from './database.js';
-import { dataSnapshots, newsItems, playerIdentities } from './schema.js';
+import { dataSnapshots, newsItems, playerIdentities, portalSnapshots } from './schema.js';
 
 export type StoredDataSnapshot = typeof dataSnapshots.$inferSelect;
 
@@ -108,5 +108,44 @@ export class NewsRepository {
 
   listRecent(limit = 200): Array<typeof newsItems.$inferSelect> {
     return this.db.select().from(newsItems).orderBy(desc(newsItems.publishedAt)).limit(limit).all();
+  }
+}
+
+export type StoredPortalSnapshot = typeof portalSnapshots.$inferSelect;
+
+export class PortalSnapshotRepository {
+  constructor(private readonly db: AppDatabase) {}
+
+  record(input: typeof portalSnapshots.$inferInsert): StoredPortalSnapshot {
+    this.db.insert(portalSnapshots).values(input).run();
+    const saved = this.db
+      .select()
+      .from(portalSnapshots)
+      .where(eq(portalSnapshots.id, input.id))
+      .get();
+    if (!saved) throw new Error('Portal snapshot disappeared after insert');
+    return saved;
+  }
+
+  latestForTeam(teamId: string): StoredPortalSnapshot | null {
+    return (
+      this.db
+        .select()
+        .from(portalSnapshots)
+        .where(eq(portalSnapshots.teamId, teamId))
+        .orderBy(desc(portalSnapshots.observedAt), desc(portalSnapshots.capturedAt))
+        .limit(1)
+        .get() ?? null
+    );
+  }
+
+  listRecentForTeam(teamId: string, limit = 20): StoredPortalSnapshot[] {
+    return this.db
+      .select()
+      .from(portalSnapshots)
+      .where(eq(portalSnapshots.teamId, teamId))
+      .orderBy(desc(portalSnapshots.observedAt), desc(portalSnapshots.capturedAt))
+      .limit(limit)
+      .all();
   }
 }

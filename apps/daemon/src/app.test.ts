@@ -222,4 +222,49 @@ describe('local daemon API', () => {
     expect(run.statusCode).toBe(200);
     expect(trigger).toHaveBeenCalledWith(team.id, 'daily_manager');
   });
+
+  it('exposes explicit read-only ESPN sync without enabling mutations', async () => {
+    const sync = vi.fn(async (team: TeamConfigV1) => ({
+      id: randomUUID(),
+      teamId: team.id,
+      leagueId: team.espnLeagueId,
+      platformTeamId: team.espnTeamId,
+      digest: 'a'.repeat(64),
+      observedAt: now,
+      capturedAt: now,
+      snapshot: {
+        signedIn: true,
+        leagueId: team.espnLeagueId,
+        teamId: team.espnTeamId,
+        page: 'clubhouse' as const,
+        roster: [],
+        availablePlayers: [],
+        waiverClaims: [],
+        tradeOffers: [],
+        draft: { status: 'pre_draft' as const, onClockTeamId: null, picks: [] },
+        observedAt: now,
+      },
+    }));
+    const app = await server({ espnSnapshots: { sync } });
+    const team = await createTeam(app);
+
+    const before = await app.inject({
+      method: 'GET',
+      url: `/api/teams/${team.id}/espn/snapshot`,
+    });
+    expect(before.statusCode).toBe(200);
+    expect(before.json()).toBeNull();
+
+    const response = await app.inject({
+      method: 'POST',
+      url: `/api/teams/${team.id}/espn/sync`,
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      teamId: team.id,
+      snapshot: { signedIn: true, leagueId: team.espnLeagueId, teamId: team.espnTeamId },
+    });
+    expect(sync).toHaveBeenCalledWith(expect.objectContaining({ id: team.id }));
+    expect(team.automation.armed).toBe(false);
+  });
 });

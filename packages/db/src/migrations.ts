@@ -175,6 +175,23 @@ const migrations = [
       CREATE INDEX job_leases_expiration_idx ON job_leases(expires_at);
     `,
   },
+  {
+    version: 4,
+    sql: `
+      CREATE TABLE portal_snapshots (
+        id TEXT PRIMARY KEY,
+        team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+        league_id TEXT NOT NULL,
+        platform_team_id TEXT NOT NULL,
+        digest TEXT NOT NULL,
+        snapshot_json TEXT NOT NULL,
+        observed_at TEXT NOT NULL,
+        captured_at TEXT NOT NULL
+      );
+      CREATE INDEX portal_snapshots_team_observed_idx
+        ON portal_snapshots(team_id, observed_at DESC);
+    `,
+  },
 ] as const;
 
 export function applyMigrations(database: Database.Database): void {

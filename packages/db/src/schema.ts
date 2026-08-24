@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 export const teams = sqliteTable(
   'teams',
@@ -185,3 +185,20 @@ export const newsItems = sqliteTable('news_items', {
   newsJson: text('news_json').notNull(),
   fetchedAt: text('fetched_at').notNull(),
 });
+
+export const portalSnapshots = sqliteTable(
+  'portal_snapshots',
+  {
+    id: text('id').primaryKey(),
+    teamId: text('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    leagueId: text('league_id').notNull(),
+    platformTeamId: text('platform_team_id').notNull(),
+    digest: text('digest').notNull(),
+    snapshotJson: text('snapshot_json').notNull(),
+    observedAt: text('observed_at').notNull(),
+    capturedAt: text('captured_at').notNull(),
+  },
+  (table) => [index('portal_snapshots_team_observed_idx').on(table.teamId, table.observedAt)],
+);
