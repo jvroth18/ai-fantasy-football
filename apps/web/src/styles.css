@@ -673,6 +673,150 @@ b {
   margin: 0 auto;
 }
 
+.fan-desk-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--team-accent) 22%, var(--line));
+  border-radius: 12px;
+  background: linear-gradient(
+    110deg,
+    color-mix(in srgb, var(--team-accent) 8%, var(--panel)),
+    var(--panel)
+  );
+}
+
+.fan-desk-signal {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.fan-desk-signal svg {
+  color: var(--team-accent);
+}
+.fan-desk-signal b {
+  margin-left: 3px;
+  color: var(--text);
+  text-transform: capitalize;
+}
+.fan-desk-hero .primary-button {
+  margin-left: auto;
+}
+
+.fan-desk-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.fan-desk-grid label {
+  display: grid;
+  gap: 7px;
+  color: #9db0a4;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.fan-desk-grid input,
+.fan-desk-grid select {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 11px;
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: #0a1710;
+}
+
+.fan-desk-range output {
+  float: right;
+  color: var(--team-accent);
+}
+.fan-desk-range input[type='range'] {
+  accent-color: var(--team-accent);
+}
+
+.fan-post-list {
+  display: grid;
+  gap: 12px;
+}
+
+.fan-post-card {
+  padding: 22px;
+  border: 1px solid color-mix(in srgb, var(--team-accent) 13%, var(--line));
+  border-radius: 13px;
+  background: var(--panel);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.12);
+}
+
+.fan-post-meta,
+.fan-post-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  color: #71877b;
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.fan-post-meta span:first-child {
+  color: var(--team-accent);
+}
+.fan-post-card h3 {
+  margin: 15px 0 8px;
+  font-size: 24px;
+  line-height: 1.08;
+}
+.fan-post-dek {
+  color: #c5d5ca;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.55;
+}
+.fan-post-body {
+  max-width: 850px;
+  color: #90a398;
+  font-size: 13px;
+  line-height: 1.75;
+  white-space: pre-line;
+}
+.fan-post-footer {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.fan-post-footer b {
+  color: var(--warning);
+}
+.fan-post-footer span {
+  color: #c6d4cb;
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.fan-post-footer small {
+  margin-left: auto;
+  color: #63766b;
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 .command-hero,
 .decision-hero {
   position: relative;
@@ -1969,6 +2113,7 @@ b {
 
   .create-team-form .form-grid,
   .range-grid,
+  .fan-desk-grid,
   .toggle-grid,
   .position-weights,
   .policy-limits,
@@ -2062,6 +2207,21 @@ b {
   .master-arm .switch-control {
     grid-column: 1 / -1;
     justify-self: end;
+  }
+
+  .fan-desk-hero .primary-button {
+    width: 100%;
+    margin-left: 0;
+  }
+  .fan-post-card {
+    padding: 17px;
+  }
+  .fan-post-card h3 {
+    font-size: 20px;
+  }
+  .fan-post-footer small {
+    width: 100%;
+    margin-left: 0;
   }
 
   .roster-table {

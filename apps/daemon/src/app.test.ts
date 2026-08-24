@@ -223,6 +223,80 @@ describe('local daemon API', () => {
     expect(trigger).toHaveBeenCalledWith(team.id, 'daily_manager');
   });
 
+  it('keeps fan desk configuration and generated posts scoped to the selected team', async () => {
+    const app = await server({
+      fanDesk: {
+        profile: (team) => ({
+          schemaVersion: 1,
+          id: randomUUID(),
+          teamId: team.id,
+          name: 'The Stands',
+          voice: 'superfan',
+          heat: 0.7,
+          rumorTolerance: 0.3,
+          cadence: 'every_3_hours',
+          enabled: true,
+          emailEnabled: false,
+          emailAddress: null,
+          emailSubjectPrefix: 'Fan desk',
+          createdAt: now,
+          updatedAt: now,
+        }),
+        posts: () => [],
+        emails: () => [],
+        saveProfile: vi.fn((_team, input) => ({
+          ...input,
+          schemaVersion: 1,
+          id: randomUUID(),
+          teamId: _team.id,
+          createdAt: now,
+          updatedAt: now,
+        })),
+        generate: vi.fn(async (team) => ({
+          post: {
+            schemaVersion: 1 as const,
+            id: randomUUID(),
+            teamId: team.id,
+            profileId: randomUUID(),
+            kind: 'game_thread' as const,
+            status: 'published' as const,
+            headline: 'Test bulletin',
+            dek: 'Test dek',
+            body: 'Test body',
+            stance: 'Test stance',
+            heat: 0.5,
+            evidence: [
+              {
+                sourceType: 'manual' as const,
+                sourceName: 'test',
+                sourceDigest: 'a'.repeat(64),
+                confidence: 1,
+                observedAt: now,
+              },
+            ],
+            generatedBy: 'deterministic' as const,
+            createdAt: now,
+            emailedAt: null,
+          },
+          email: null,
+          syncWarning: null,
+        })),
+        runScheduled: vi.fn(),
+      },
+    });
+    const team = await createTeam(app);
+    const profile = await app.inject({ method: 'GET', url: `/api/teams/${team.id}/fan-desk` });
+    expect(profile.statusCode).toBe(200);
+    expect(profile.json()).toMatchObject({ profile: { teamId: team.id, voice: 'superfan' } });
+
+    const generated = await app.inject({
+      method: 'POST',
+      url: `/api/teams/${team.id}/fan-desk/generate`,
+    });
+    expect(generated.statusCode).toBe(200);
+    expect(generated.json()).toMatchObject({ post: { teamId: team.id } });
+  });
+
   it('exposes explicit read-only ESPN sync without enabling mutations', async () => {
     const sync = vi.fn(async (team: TeamConfigV1) => ({
       id: randomUUID(),

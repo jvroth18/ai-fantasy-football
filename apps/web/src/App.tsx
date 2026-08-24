@@ -6,6 +6,7 @@ import {
   ChevronDown,
   Database,
   FileText,
+  Mic2,
   LayoutDashboard,
   ListPlus,
   LoaderCircle,
@@ -27,6 +28,7 @@ import { api, ApiError } from './api.js';
 import { PlayerRankings } from './PlayerRankings.js';
 import { AutomationPanel } from './components/AutomationPanel.js';
 import { CreateTeamForm } from './components/CreateTeamForm.js';
+import { FanDeskPanel } from './components/FanDeskPanel.js';
 import { RulesPanel } from './components/RulesPanel.js';
 import { StrategyPanel, type StrategyInput } from './components/StrategyPanel.js';
 import type {
@@ -47,10 +49,12 @@ type Tab =
   | 'trades'
   | 'rules'
   | 'strategy'
-  | 'automation';
+  | 'automation'
+  | 'fan';
 
 const navigation: Array<{ id: Tab; label: string; icon: LucideIcon }> = [
   { id: 'command', label: 'Command center', icon: LayoutDashboard },
+  { id: 'fan', label: 'Fan desk', icon: Mic2 },
   { id: 'draft', label: 'Draft room', icon: Trophy },
   { id: 'roster', label: 'Roster', icon: Users },
   { id: 'players', label: 'Player rankings', icon: Database },
@@ -68,6 +72,7 @@ const jobNames: Record<string, string> = {
   waiver_plan: 'Waiver plan',
   trade_market: 'Trade market scan',
   lineup_watch: 'Lineup watch',
+  fan_digest: 'Fan desk bulletin',
 };
 
 function formatDate(value: string | null | undefined, fallback = 'Not yet') {
@@ -360,6 +365,28 @@ export function App() {
     await Promise.all([refreshTeam(team.id), refreshBootstrap(team.id)]);
   }
 
+  async function saveFanDesk(input: Parameters<typeof api.saveFanDesk>[1]) {
+    if (!team) return;
+    const completed = await perform(
+      'fan-save',
+      () => api.saveFanDesk(team.id, input),
+      'Fan desk voice saved',
+    );
+    if (!completed) return;
+    await refreshTeam(team.id);
+  }
+
+  async function generateFanDesk() {
+    if (!team) return;
+    const completed = await perform(
+      'fan-generate',
+      () => api.generateFanDesk(team.id),
+      'New fan bulletin published',
+    );
+    if (!completed) return;
+    await refreshTeam(team.id);
+  }
+
   if (loading) {
     return (
       <main className="loading-screen">
@@ -575,6 +602,14 @@ export function App() {
                 policy={team.automation}
                 busy={busy === 'automation'}
                 onSave={saveAutomation}
+              />
+            ) : null}
+            {tab === 'fan' ? (
+              <FanDeskPanel
+                state={selectedDetail.fanDesk}
+                busy={busy}
+                onSave={saveFanDesk}
+                onGenerate={generateFanDesk}
               />
             ) : null}
           </>

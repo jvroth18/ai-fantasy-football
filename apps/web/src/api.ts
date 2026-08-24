@@ -4,6 +4,8 @@ import type {
   Bootstrap,
   CreateTeamInput,
   RuleImportResult,
+  FanDeskInput,
+  FanDeskState,
   Strategy,
   Team,
   TeamDetail,
@@ -106,4 +108,13 @@ export const api = {
       `/api/teams/${teamId}/recommendations/${recommendationId}/execute`,
       json('POST', { confirmation: 'EXECUTE ESPN ACTION' }),
     ),
+  saveFanDesk: async (teamId: string, input: FanDeskInput) =>
+    await request<FanDeskState['profile']>(`/api/teams/${teamId}/fan-desk`, json('PUT', input)),
+  fanDesk: async (teamId: string) => await request<FanDeskState>(`/api/teams/${teamId}/fan-desk`),
+  generateFanDesk: async (teamId: string) =>
+    await request<{
+      post: FanDeskState['posts'][number];
+      email: FanDeskState['emails'][number] | null;
+      syncWarning: string | null;
+    }>(`/api/teams/${teamId}/fan-desk/generate`, json('POST')),
 };

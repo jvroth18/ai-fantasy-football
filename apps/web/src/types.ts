@@ -195,7 +195,77 @@ export type TeamDetail = {
   espnSnapshot: PortalSnapshotView | null;
   recommendations: Recommendation[];
   runs: AutomationRun[];
+  fanDesk?: FanDeskState | null;
 };
+
+export type FanDeskProfile = {
+  schemaVersion: 1;
+  id: string;
+  teamId: string;
+  name: string;
+  voice: 'superfan' | 'contrarian' | 'analyst' | 'commissioner';
+  heat: number;
+  rumorTolerance: number;
+  cadence: 'hourly' | 'every_3_hours' | 'daily' | 'weekly';
+  enabled: boolean;
+  emailEnabled: boolean;
+  emailAddress: string | null;
+  emailSubjectPrefix: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type FanPost = {
+  schemaVersion: 1;
+  id: string;
+  teamId: string;
+  profileId: string;
+  kind:
+    | 'breaking_news'
+    | 'waiver_wire'
+    | 'trade_rumor'
+    | 'power_rankings'
+    | 'game_thread'
+    | 'weekly_recap';
+  status: 'published' | 'emailed';
+  headline: string;
+  dek: string;
+  body: string;
+  stance: string;
+  heat: number;
+  evidence: Array<{
+    sourceType: string;
+    sourceName: string;
+    sourceDigest: string;
+    locator?: string;
+    excerpt?: string;
+    confidence: number;
+    observedAt: string;
+  }>;
+  generatedBy: 'deterministic' | 'codex';
+  createdAt: string;
+  emailedAt: string | null;
+};
+
+export type FanEmail = {
+  id: string;
+  teamId: string;
+  postId: string;
+  recipient: string;
+  subject: string;
+  body: string;
+  status: string;
+  provider: string;
+  errorMessage: string | null;
+  createdAt: string;
+  sentAt: string | null;
+};
+
+export type FanDeskState = { profile: FanDeskProfile; posts: FanPost[]; emails: FanEmail[] };
+export type FanDeskInput = Omit<
+  FanDeskProfile,
+  'schemaVersion' | 'id' | 'teamId' | 'createdAt' | 'updatedAt'
+>;
 
 export type RuleConflict = { pointer: string; left: unknown; right: unknown };
 
