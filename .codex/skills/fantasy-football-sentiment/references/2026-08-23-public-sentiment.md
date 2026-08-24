@@ -11,39 +11,39 @@ The most stable rookie consensus centers on Jeremiyah Love as the premier rookie
 
 ## Rookie consensus tier
 
-| Player | Sentiment | Evidence and interpretation |
-| --- | --- | --- |
-| Jeremiyah Love, RB, ARI | Strong positive; expensive | Footballguys places him first on its consensus rookie board, while Sports Illustrated ranks him RB1. This is broad dynasty support, but price discipline still matters in redraft. |
-| Carnell Tate, WR, TEN | Strong positive | SI ranks him WR1, and Tennessee's improved receiving corps supports both immediate opportunity and the bullish Year-2 Cam Ward thesis. |
-| Jordyn Tyson, WR, NO | Positive value | SI ranks him WR2. NFL.com highlights the discount between his top-eight NFL draft capital and ninth-round/WR35 fantasy cost. |
-| Fernando Mendoza, QB, LV | Positive dynasty; cooling slightly | SI ranks him QB1 and Footballguys places him second overall in its superflex-oriented rookie consensus. Sleeper startup data nevertheless showed a four-pick ADP decline from July 1 to August 1. |
-| Kenyon Sadiq, TE, NYJ | Positive long term; cooling slightly | SI ranks him TE1 and Footballguys includes him in the top rookie tier, but July-to-August startup ADP slipped three picks. Rookie tight-end development remains a redraft constraint. |
+| Player                   | Sentiment                            | Evidence and interpretation                                                                                                                                                                       |
+| ------------------------ | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Jeremiyah Love, RB, ARI  | Strong positive; expensive           | Footballguys places him first on its consensus rookie board, while Sports Illustrated ranks him RB1. This is broad dynasty support, but price discipline still matters in redraft.                |
+| Carnell Tate, WR, TEN    | Strong positive                      | SI ranks him WR1, and Tennessee's improved receiving corps supports both immediate opportunity and the bullish Year-2 Cam Ward thesis.                                                            |
+| Jordyn Tyson, WR, NO     | Positive value                       | SI ranks him WR2. NFL.com highlights the discount between his top-eight NFL draft capital and ninth-round/WR35 fantasy cost.                                                                      |
+| Fernando Mendoza, QB, LV | Positive dynasty; cooling slightly   | SI ranks him QB1 and Footballguys places him second overall in its superflex-oriented rookie consensus. Sleeper startup data nevertheless showed a four-pick ADP decline from July 1 to August 1. |
+| Kenyon Sadiq, TE, NYJ    | Positive long term; cooling slightly | SI ranks him TE1 and Footballguys includes him in the top rookie tier, but July-to-August startup ADP slipped three picks. Rookie tight-end development remains a redraft constraint.             |
 
 ## Rookie sentiment risers
 
-| Player | Signal | Why sentiment is rising | Main caution |
-| --- | --- | --- | --- |
-| De'Zhaun Stribling, WR, SF | Strong momentum | NFL.com reported his ESPN ADP moving from outside 200 to inside 170 in one week, supported by first-team opportunity, camp praise, and a productive preseason opener. | Target competition remains substantial, and hamstring tightness adds volatility. |
-| Denzel Boston, WR, CLE | Positive but contested | Multiple analyst and beat-report streams describe persistent camp success and promotion to the first-team offense. NFL.com sees a path to Cleveland's WR1 role. | Analysts disagree about whether poor quarterback and scoring conditions can turn that role into startable redraft production. |
-| Ja'Kobi Lane, WR, BAL | Heavy hype; overheating risk | Camp reports, coordinator praise, red-zone work, and a preseason touchdown have created one of the loudest rookie narratives. | NFL.com warns that expectations may now be outrunning likely volume behind established Baltimore targets. |
-| Caleb Douglas, WR, MIA | Opportunity-driven rise | He led rookie startup ADP risers in a 100-draft Sleeper sample and has a plausible path to immediate targets in a rebuilt Miami receiver room. | The offense and quarterback environment could reduce the value of even a leading role. |
-| Malachi Fields, WR, NYG | Moderate positive | Strong camp and contested-catch evidence put him in the WR2 competition, with potential red-zone compatibility with Jaxson Dart. | Crowded competition and limited speed make the weekly floor uncertain. |
-| Mike Washington Jr., RB, LV | Underpriced contingent upside | CBS identifies him as a late-round handcuff whose lack of ADP creates asymmetric upside behind Ashton Jeanty. | His thesis currently depends more on an injury ahead of him than an independent weekly role. |
+| Player                      | Signal                        | Why sentiment is rising                                                                                                                                               | Main caution                                                                                                                  |
+| --------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| De'Zhaun Stribling, WR, SF  | Strong momentum               | NFL.com reported his ESPN ADP moving from outside 200 to inside 170 in one week, supported by first-team opportunity, camp praise, and a productive preseason opener. | Target competition remains substantial, and hamstring tightness adds volatility.                                              |
+| Denzel Boston, WR, CLE      | Positive but contested        | Multiple analyst and beat-report streams describe persistent camp success and promotion to the first-team offense. NFL.com sees a path to Cleveland's WR1 role.       | Analysts disagree about whether poor quarterback and scoring conditions can turn that role into startable redraft production. |
+| Ja'Kobi Lane, WR, BAL       | Heavy hype; overheating risk  | Camp reports, coordinator praise, red-zone work, and a preseason touchdown have created one of the loudest rookie narratives.                                         | NFL.com warns that expectations may now be outrunning likely volume behind established Baltimore targets.                     |
+| Caleb Douglas, WR, MIA      | Opportunity-driven rise       | He led rookie startup ADP risers in a 100-draft Sleeper sample and has a plausible path to immediate targets in a rebuilt Miami receiver room.                        | The offense and quarterback environment could reduce the value of even a leading role.                                        |
+| Malachi Fields, WR, NYG     | Moderate positive             | Strong camp and contested-catch evidence put him in the WR2 competition, with potential red-zone compatibility with Jaxson Dart.                                      | Crowded competition and limited speed make the weekly floor uncertain.                                                        |
+| Mike Washington Jr., RB, LV | Underpriced contingent upside | CBS identifies him as a late-round handcuff whose lack of ADP creates asymmetric upside behind Ashton Jeanty.                                                         | His thesis currently depends more on an injury ahead of him than an independent weekly role.                                  |
 
 Deep dynasty market movers from the July-to-August Sleeper sample included Kaelon Black, Drew Allar, Taylen Green, Seth McGowan, J'Mari Taylor, Marlin Klein, Carson Beck, Cade Klubnik, and Cyrus Allen. Most movement occurred in very late startup rounds and should be treated as watch-list evidence, not strong redraft endorsement.
 
 ## Veteran and second-year breakout themes
 
-| Player | Analyst thesis | Risk or disagreement |
-| --- | --- | --- |
-| Jaxson Dart, QB, NYG | His 20.13 fantasy points per 2025 start would have ranked near the elite tier; rushing and healthier weapons support another step. | New-system adaptation and prior concussion history remain relevant. |
-| Cam Ward, QB, TEN | Late-2025 efficiency improvement plus upgraded receivers create a credible Year-2 rebound case. Sleeper startup ADP rose six picks in July. | The thesis leans heavily on a small late-season sample and improved environment. |
-| Cam Skattebo, RB, NYG | Feature-back production, elite tackle-breaking, and run-game upgrades support league-winning upside. | Running style, prior injury, and Tyrone Tracy Jr. keep the range of outcomes wide. |
-| Jordan Mason, RB, MIN | Elite missed-tackle and explosive-run rates plus Aaron Jones' age make him a popular role-growth bet. Dynasty startup ADP rose by a round in July. | The breakout requires Minnesota to change the backfield hierarchy. |
-| Jonathon Brooks, RB, CAR | Former Day-2 profile and positive health reports preserve three-down upside at a depressed cost. | Multiple ACL recoveries make health and workload unusually uncertain. |
-| Parker Washington, WR, JAX | Late-2025 production and strong target/route efficiency support a larger role. | Jacksonville's crowded receiver group can cap volume. |
-| Tetairoa McMillan, WR, CAR | A 1,000-yard rookie season and weak target competition support a jump from WR15 toward the elite tier. | His ceiling remains tied to Bryce Young's development. |
-| Josh Downs, WR, IND | Strong target rate and catch efficiency suggest market price trails performance. | Offensive distribution still influences his touchdown ceiling. |
+| Player                     | Analyst thesis                                                                                                                                     | Risk or disagreement                                                               |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Jaxson Dart, QB, NYG       | His 20.13 fantasy points per 2025 start would have ranked near the elite tier; rushing and healthier weapons support another step.                 | New-system adaptation and prior concussion history remain relevant.                |
+| Cam Ward, QB, TEN          | Late-2025 efficiency improvement plus upgraded receivers create a credible Year-2 rebound case. Sleeper startup ADP rose six picks in July.        | The thesis leans heavily on a small late-season sample and improved environment.   |
+| Cam Skattebo, RB, NYG      | Feature-back production, elite tackle-breaking, and run-game upgrades support league-winning upside.                                               | Running style, prior injury, and Tyrone Tracy Jr. keep the range of outcomes wide. |
+| Jordan Mason, RB, MIN      | Elite missed-tackle and explosive-run rates plus Aaron Jones' age make him a popular role-growth bet. Dynasty startup ADP rose by a round in July. | The breakout requires Minnesota to change the backfield hierarchy.                 |
+| Jonathon Brooks, RB, CAR   | Former Day-2 profile and positive health reports preserve three-down upside at a depressed cost.                                                   | Multiple ACL recoveries make health and workload unusually uncertain.              |
+| Parker Washington, WR, JAX | Late-2025 production and strong target/route efficiency support a larger role.                                                                     | Jacksonville's crowded receiver group can cap volume.                              |
+| Tetairoa McMillan, WR, CAR | A 1,000-yard rookie season and weak target competition support a jump from WR15 toward the elite tier.                                             | His ceiling remains tied to Bryce Young's development.                             |
+| Josh Downs, WR, IND        | Strong target rate and catch efficiency suggest market price trails performance.                                                                   | Offensive distribution still influences his touchdown ceiling.                     |
 
 ## Cooling or fragile narratives
 
