@@ -8,7 +8,7 @@ import {
   type RecommendationV1,
   type StrategyProfileV1,
 } from '@ai-ff/domain';
-import { and, desc, eq, gt, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, inArray, sql } from 'drizzle-orm';
 
 import type { AppDatabase } from './database.js';
 import {
@@ -130,6 +130,68 @@ export class RecommendationRepository {
       .orderBy(desc(recommendations.createdAt))
       .all()
       .map((row) => recommendationV1Schema.parse(JSON.parse(row.recommendationJson)));
+  }
+
+  replaceActiveForTypes(
+    teamId: string,
+    types: RecommendationV1['type'][],
+    inputs: RecommendationV1[],
+    now: string,
+  ): RecommendationV1[] {
+    const uniqueTypes = [...new Set(types)];
+    if (uniqueTypes.length === 0) throw new Error('At least one recommendation type is required');
+    const parsed = inputs.map((input) => recommendationV1Schema.parse(input));
+    for (const recommendation of parsed) {
+      if (recommendation.teamId !== teamId) {
+        throw new Error('Recommendation belongs to a different team');
+      }
+      if (!uniqueTypes.includes(recommendation.type)) {
+        throw new Error('Replacement recommendation has an unexpected type');
+      }
+      const existing = this.db
+        .select({ teamId: recommendations.teamId })
+        .from(recommendations)
+        .where(eq(recommendations.id, recommendation.id))
+        .get();
+      if (existing && existing.teamId !== teamId) {
+        throw new Error('Recommendation belongs to a different team');
+      }
+    }
+
+    this.db.transaction((transaction) => {
+      transaction
+        .update(recommendations)
+        .set({ expiresAt: now })
+        .where(
+          and(
+            eq(recommendations.teamId, teamId),
+            gt(recommendations.expiresAt, now),
+            inArray(recommendations.type, uniqueTypes),
+          ),
+        )
+        .run();
+      for (const recommendation of parsed) {
+        transaction
+          .insert(recommendations)
+          .values({
+            id: recommendation.id,
+            teamId: recommendation.teamId,
+            type: recommendation.type,
+            recommendationJson: JSON.stringify(recommendation),
+            createdAt: recommendation.createdAt,
+            expiresAt: recommendation.expiresAt,
+          })
+          .onConflictDoUpdate({
+            target: recommendations.id,
+            set: {
+              recommendationJson: JSON.stringify(recommendation),
+              expiresAt: recommendation.expiresAt,
+            },
+          })
+          .run();
+      }
+    });
+    return parsed;
   }
 }
 

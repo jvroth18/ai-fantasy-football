@@ -164,6 +164,36 @@ describe('workflow persistence', () => {
     expect(recommendations.listActive(teamB.id, now)).toEqual([]);
   });
 
+  it('atomically replaces only the requested active recommendation types', () => {
+    const { handle, teamA } = setup();
+    const recommendations = new RecommendationRepository(handle.db);
+    const oldWaiver = recommendations.save(recommendationFixture(teamA.id));
+    const trade = recommendations.save({
+      ...recommendationFixture(teamA.id),
+      type: 'trade',
+      title: 'Trade for a receiver',
+    });
+    const replacement = {
+      ...recommendationFixture(teamA.id),
+      title: 'Add the new top receiver',
+      createdAt: '2026-08-23T19:00:00.000Z',
+    };
+
+    expect(
+      recommendations.replaceActiveForTypes(
+        teamA.id,
+        ['waiver'],
+        [replacement],
+        replacement.createdAt,
+      ),
+    ).toEqual([replacement]);
+    expect(recommendations.listActive(teamA.id, replacement.createdAt)).toEqual([
+      replacement,
+      trade,
+    ]);
+    expect(recommendations.listActive(teamA.id, now)).toContainEqual(oldWaiver);
+  });
+
   it('allows the same idempotency text for independent teams but not different actions on one team', () => {
     const { handle, teamA, teamB } = setup();
     const actions = new ActionIntentRepository(handle.db);
