@@ -118,6 +118,8 @@ describe('application shell', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Fan desk' }));
     expect(screen.getByRole('heading', { level: 2, name: 'Fan desk' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Generate bulletin/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Agent network' }));
+    expect(screen.getByRole('heading', { level: 1, name: 'Agent network' })).toBeInTheDocument();
   });
 
   it('keeps the automation save gate disabled until the exact arming phrase is typed', async () => {

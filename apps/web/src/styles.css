@@ -817,6 +817,174 @@ b {
   text-transform: none;
 }
 
+.network-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px;
+  border: 1px solid color-mix(in srgb, var(--team-accent) 22%, var(--line));
+  border-radius: 13px;
+  background: linear-gradient(
+    110deg,
+    color-mix(in srgb, var(--team-accent) 8%, var(--panel)),
+    var(--panel)
+  );
+}
+.network-hero h3 {
+  margin: 7px 0 5px;
+  font-size: 18px;
+}
+.network-hero span {
+  color: #758b7e;
+  font-size: 11px;
+}
+.network-settings > label:first-of-type {
+  display: grid;
+  gap: 7px;
+  color: #9db0a4;
+  font-size: 11px;
+  font-weight: 700;
+}
+.network-settings input:not([type='checkbox']),
+.network-settings select,
+.network-agent-card input:not([type='checkbox']),
+.network-agent-card select,
+.network-policy-grid input:not([type='checkbox']) {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 11px;
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: #0a1710;
+}
+.network-policy-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.network-policy-grid > label:not(.toggle-row) {
+  display: grid;
+  gap: 7px;
+  color: #9db0a4;
+  font-size: 11px;
+  font-weight: 700;
+}
+.network-agent-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.network-agent-card {
+  display: grid;
+  gap: 11px;
+  padding: 17px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+}
+.network-agent-card.disabled {
+  opacity: 0.55;
+}
+.network-agent-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.network-agent-head h3 {
+  margin: 4px 0 2px;
+  font-size: 15px;
+}
+.network-agent-head small {
+  color: #63776b;
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+}
+.agent-role {
+  color: var(--team-accent);
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.network-agent-card label {
+  display: grid;
+  gap: 6px;
+  color: #8ea397;
+  font-size: 10px;
+  font-weight: 700;
+}
+.agent-flow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding-top: 4px;
+  color: #6e8377;
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+}
+.agent-flow svg {
+  color: var(--team-accent);
+}
+.route-panel {
+  overflow: hidden;
+}
+.route-list {
+  display: grid;
+  gap: 1px;
+}
+.route-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.8fr) 20px minmax(120px, 1fr) auto;
+  gap: 9px;
+  align-items: center;
+  min-height: 37px;
+  border-top: 1px solid var(--line);
+  color: #a8b9af;
+  font-size: 11px;
+}
+.route-row code {
+  color: var(--team-accent);
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+}
+.route-row > span {
+  color: #5b7466;
+}
+.route-row b {
+  font-size: 10px;
+}
+.route-row small {
+  color: #61766a;
+  font-family: ui-monospace, monospace;
+  font-size: 8px;
+  text-transform: uppercase;
+}
+.network-events-panel {
+  padding: 21px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+}
+.event-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.event-row span {
+  color: #c7d7cc;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+}
+.event-row small {
+  color: #65796d;
+  font-size: 10px;
+}
+
 .command-hero,
 .decision-hero {
   position: relative;
@@ -2114,6 +2282,7 @@ b {
   .create-team-form .form-grid,
   .range-grid,
   .fan-desk-grid,
+  .network-policy-grid,
   .toggle-grid,
   .position-weights,
   .policy-limits,
@@ -2212,6 +2381,22 @@ b {
   .fan-desk-hero .primary-button {
     width: 100%;
     margin-left: 0;
+  }
+  .network-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .network-hero .primary-button {
+    width: 100%;
+  }
+  .network-agent-grid {
+    grid-template-columns: 1fr;
+  }
+  .route-row {
+    grid-template-columns: 1fr 18px 1fr;
+  }
+  .route-row small {
+    grid-column: 3;
   }
   .fan-post-card {
     padding: 17px;

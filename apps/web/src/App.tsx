@@ -7,6 +7,7 @@ import {
   Database,
   FileText,
   Mic2,
+  Network,
   LayoutDashboard,
   ListPlus,
   LoaderCircle,
@@ -29,6 +30,7 @@ import { PlayerRankings } from './PlayerRankings.js';
 import { AutomationPanel } from './components/AutomationPanel.js';
 import { CreateTeamForm } from './components/CreateTeamForm.js';
 import { FanDeskPanel } from './components/FanDeskPanel.js';
+import { FanNetworkPanel } from './components/FanNetworkPanel.js';
 import { RulesPanel } from './components/RulesPanel.js';
 import { StrategyPanel, type StrategyInput } from './components/StrategyPanel.js';
 import type {
@@ -50,11 +52,13 @@ type Tab =
   | 'rules'
   | 'strategy'
   | 'automation'
-  | 'fan';
+  | 'fan'
+  | 'network';
 
 const navigation: Array<{ id: Tab; label: string; icon: LucideIcon }> = [
   { id: 'command', label: 'Command center', icon: LayoutDashboard },
   { id: 'fan', label: 'Fan desk', icon: Mic2 },
+  { id: 'network', label: 'Agent network', icon: Network },
   { id: 'draft', label: 'Draft room', icon: Trophy },
   { id: 'roster', label: 'Roster', icon: Users },
   { id: 'players', label: 'Player rankings', icon: Database },
@@ -387,6 +391,36 @@ export function App() {
     await refreshTeam(team.id);
   }
 
+  async function saveFanNetwork(input: Parameters<typeof api.saveFanNetwork>[1]) {
+    if (!team) return;
+    const completed = await perform(
+      'network-save',
+      () => api.saveFanNetwork(team.id, input),
+      'Agent network saved',
+    );
+    if (!completed) return;
+    await refreshTeam(team.id);
+  }
+
+  async function testFanMention() {
+    if (!team) return;
+    const completed = await perform(
+      'network-mention',
+      () =>
+        api.emitFanNetworkEvent(team.id, {
+          type: 'fan.mention.received',
+          payload: {
+            channel: 'web',
+            author: 'preview-user',
+            text: 'Is this team actually making a move or just posting through it?',
+          },
+        }),
+      'Fan mention routed through the network',
+    );
+    if (!completed) return;
+    await refreshTeam(team.id);
+  }
+
   if (loading) {
     return (
       <main className="loading-screen">
@@ -610,6 +644,15 @@ export function App() {
                 busy={busy}
                 onSave={saveFanDesk}
                 onGenerate={generateFanDesk}
+              />
+            ) : null}
+            {tab === 'network' ? (
+              <FanNetworkPanel
+                key={selectedDetail.fanNetwork?.network.updatedAt ?? 'new-network'}
+                state={selectedDetail.fanNetwork}
+                busy={busy}
+                onSave={saveFanNetwork}
+                onMention={testFanMention}
               />
             ) : null}
           </>

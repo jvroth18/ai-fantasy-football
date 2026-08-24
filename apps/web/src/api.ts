@@ -6,6 +6,8 @@ import type {
   RuleImportResult,
   FanDeskInput,
   FanDeskState,
+  FanNetworkInput,
+  FanNetworkState,
   Strategy,
   Team,
   TeamDetail,
@@ -117,4 +119,15 @@ export const api = {
       email: FanDeskState['emails'][number] | null;
       syncWarning: string | null;
     }>(`/api/teams/${teamId}/fan-desk/generate`, json('POST')),
+  saveFanNetwork: async (teamId: string, input: FanNetworkInput) =>
+    await request<FanNetworkState['network']>(
+      `/api/teams/${teamId}/fan-network`,
+      json('PUT', input),
+    ),
+  fanNetwork: async (teamId: string) =>
+    await request<FanNetworkState>(`/api/teams/${teamId}/fan-network`),
+  emitFanNetworkEvent: async (
+    teamId: string,
+    input: { type: string; payload: Record<string, unknown> },
+  ) => await request<unknown>(`/api/teams/${teamId}/fan-network/events`, json('POST', input)),
 };

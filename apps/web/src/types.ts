@@ -196,6 +196,7 @@ export type TeamDetail = {
   recommendations: Recommendation[];
   runs: AutomationRun[];
   fanDesk?: FanDeskState | null;
+  fanNetwork?: FanNetworkState | null;
 };
 
 export type FanDeskProfile = {
@@ -264,6 +265,106 @@ export type FanEmail = {
 export type FanDeskState = { profile: FanDeskProfile; posts: FanPost[]; emails: FanEmail[] };
 export type FanDeskInput = Omit<
   FanDeskProfile,
+  'schemaVersion' | 'id' | 'teamId' | 'createdAt' | 'updatedAt'
+>;
+
+export type FanEventType =
+  | 'espn.snapshot.updated'
+  | 'news.item.created'
+  | 'league.signal.detected'
+  | 'analysis.ready'
+  | 'fan.post.drafted'
+  | 'fan.post.approved'
+  | 'fan.post.published'
+  | 'fan.mention.received'
+  | 'fan.reply.drafted'
+  | 'fan.reply.approved'
+  | 'fan.reply.published'
+  | 'digest.due';
+
+export type FanNetworkAgent = {
+  id: string;
+  name: string;
+  role:
+    | 'observer'
+    | 'analyst'
+    | 'superfan'
+    | 'contrarian'
+    | 'commissioner'
+    | 'publisher'
+    | 'reply_writer'
+    | 'moderator'
+    | 'custom';
+  instructions: string;
+  model: {
+    provider: 'codex' | 'openai' | 'ollama' | 'http' | 'none';
+    modelId: string;
+    temperature: number;
+    maxOutputTokens: number;
+  };
+  listensTo: FanEventType[];
+  emits: FanEventType[];
+  enabled: boolean;
+  heat: number;
+  toolPermissions: { readPortal: boolean; readNews: boolean; publish: boolean; reply: boolean };
+};
+
+export type FanNetwork = {
+  schemaVersion: 1;
+  id: string;
+  teamId: string;
+  name: string;
+  enabled: boolean;
+  agents: FanNetworkAgent[];
+  routes: Array<{ event: FanEventType; to: string[]; parallel: boolean }>;
+  policies: {
+    requireEvidence: boolean;
+    identifyAsAi: boolean;
+    maxRepliesPerHour: number;
+    maxModelSpendPerDay: number;
+    maxTurnsPerEvent: number;
+    neverInventInjuries: boolean;
+    neverAcceptTrades: boolean;
+  };
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type FanNetworkEvent = {
+  schemaVersion: 1;
+  id: string;
+  networkId: string;
+  teamId: string;
+  type: FanEventType;
+  correlationId: string;
+  sourceAgentId: string | null;
+  payload: Record<string, unknown>;
+  evidence: FanPost['evidence'];
+  createdAt: string;
+};
+export type FanAgentRun = {
+  schemaVersion: 1;
+  id: string;
+  networkId: string;
+  teamId: string;
+  eventId: string;
+  agentId: string;
+  status: 'queued' | 'executing' | 'completed' | 'skipped' | 'failed';
+  attempt: number;
+  outputEventIds: string[];
+  errorCode: string | null;
+  errorMessage: string | null;
+  createdAt: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+};
+export type FanNetworkState = {
+  network: FanNetwork;
+  events: FanNetworkEvent[];
+  runs: FanAgentRun[];
+};
+export type FanNetworkInput = Omit<
+  FanNetwork,
   'schemaVersion' | 'id' | 'teamId' | 'createdAt' | 'updatedAt'
 >;
 
