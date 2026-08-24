@@ -93,17 +93,33 @@ export function snapshotFixture(): EspnPortalSnapshot {
         name: 'Available Receiver',
         position: 'WR',
         nflTeam: 'GB',
+        acquisitionType: 'free_agent',
       },
       {
         playerId: 'rookie-wr',
         name: 'Rookie Receiver',
         position: 'WR',
         nflTeam: 'DAL',
+        acquisitionType: 'waiver',
+      },
+    ],
+    leagueTeams: [
+      {
+        teamId: 'team-2',
+        name: 'Sunday Rivals',
+        roster: [
+          {
+            playerId: 'rival-te',
+            name: 'Rival Tight End',
+            position: 'TE',
+            nflTeam: 'KC',
+          },
+        ],
       },
     ],
     waiverClaims: [],
     tradeOffers: [],
-    draft: { status: 'live', onClockTeamId: 'team-7', picks: [] },
+    draft: { status: 'live', onClockTeamId: 'team-7', draftSlot: 7, picks: [] },
     observedAt: fixtureNow,
   };
 }

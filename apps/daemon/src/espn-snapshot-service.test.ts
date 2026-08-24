@@ -57,9 +57,10 @@ function snapshotFixture(): EspnPortalSnapshot {
       },
     ],
     availablePlayers: [],
+    leagueTeams: [],
     waiverClaims: [],
     tradeOffers: [],
-    draft: { status: 'pre_draft', onClockTeamId: null, picks: [] },
+    draft: { status: 'pre_draft', onClockTeamId: null, draftSlot: 7, picks: [] },
     observedAt: now,
   };
 }

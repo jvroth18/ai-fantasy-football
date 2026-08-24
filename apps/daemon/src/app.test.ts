@@ -239,9 +239,15 @@ describe('local daemon API', () => {
         page: 'clubhouse' as const,
         roster: [],
         availablePlayers: [],
+        leagueTeams: [],
         waiverClaims: [],
         tradeOffers: [],
-        draft: { status: 'pre_draft' as const, onClockTeamId: null, picks: [] },
+        draft: {
+          status: 'pre_draft' as const,
+          onClockTeamId: null,
+          draftSlot: 7,
+          picks: [],
+        },
         observedAt: now,
       },
     }));

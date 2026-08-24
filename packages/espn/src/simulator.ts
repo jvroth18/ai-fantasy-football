@@ -104,10 +104,18 @@ export class SimulatedEspnPortal implements EspnPortalAdapter {
               name: dropped.name,
               position: dropped.position,
               nflTeam: dropped.nflTeam,
+              acquisitionType: 'waiver',
             });
           }
         }
-        this.#snapshot.roster.push({ ...added, slot: action.targetSlot, locked: false });
+        this.#snapshot.roster.push({
+          playerId: added.playerId,
+          name: added.name,
+          position: added.position,
+          nflTeam: added.nflTeam,
+          slot: action.targetSlot,
+          locked: false,
+        });
         return null;
       }
       case 'draft_pick': {
@@ -125,7 +133,14 @@ export class SimulatedEspnPortal implements EspnPortalAdapter {
           teamId: this.#snapshot.teamId,
           playerId: action.playerId,
         });
-        this.#snapshot.roster.push({ ...player, slot: 'BENCH', locked: false });
+        this.#snapshot.roster.push({
+          playerId: player.playerId,
+          name: player.name,
+          position: player.position,
+          nflTeam: player.nflTeam,
+          slot: 'BENCH',
+          locked: false,
+        });
         this.#snapshot.draft.onClockTeamId = null;
         return null;
       }

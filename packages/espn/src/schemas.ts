@@ -7,9 +7,19 @@ const portalPlayerSchema = z.object({
   nflTeam: z.string().nullable(),
 });
 
+const availablePlayerSchema = portalPlayerSchema.extend({
+  acquisitionType: z.enum(['waiver', 'free_agent', 'unknown']),
+});
+
 const rosterEntrySchema = portalPlayerSchema.extend({
   slot: z.string().min(1),
   locked: z.boolean(),
+});
+
+const leagueTeamSchema = z.object({
+  teamId: z.string().min(1),
+  name: z.string().min(1),
+  roster: z.array(portalPlayerSchema),
 });
 
 const waiverClaimSchema = z.object({
@@ -34,12 +44,14 @@ export const espnPortalSnapshotSchema = z.object({
   teamId: z.string().min(1),
   page: z.enum(['clubhouse', 'players', 'draft', 'trades', 'unknown']),
   roster: z.array(rosterEntrySchema),
-  availablePlayers: z.array(portalPlayerSchema),
+  availablePlayers: z.array(availablePlayerSchema),
+  leagueTeams: z.array(leagueTeamSchema),
   waiverClaims: z.array(waiverClaimSchema),
   tradeOffers: z.array(tradeOfferSchema),
   draft: z.object({
     status: z.enum(['pre_draft', 'live', 'complete']),
     onClockTeamId: z.string().nullable(),
+    draftSlot: z.number().int().min(1).max(32).nullable(),
     picks: z.array(
       z.object({
         actionId: z.string().min(1),
@@ -98,7 +110,8 @@ export const portalSnapshotJsonSchema = {
     teamId: { type: 'string' },
     page: { type: 'string', enum: ['clubhouse', 'players', 'draft', 'trades', 'unknown'] },
     roster: { type: 'array', items: { $ref: '#/$defs/rosterEntry' } },
-    availablePlayers: { type: 'array', items: { $ref: '#/$defs/player' } },
+    availablePlayers: { type: 'array', items: { $ref: '#/$defs/availablePlayer' } },
+    leagueTeams: { type: 'array', items: { $ref: '#/$defs/leagueTeam' } },
     waiverClaims: { type: 'array', items: { $ref: '#/$defs/waiverClaim' } },
     tradeOffers: { type: 'array', items: { $ref: '#/$defs/tradeOffer' } },
     draft: {
@@ -106,6 +119,7 @@ export const portalSnapshotJsonSchema = {
       properties: {
         status: { type: 'string', enum: ['pre_draft', 'live', 'complete'] },
         onClockTeamId: { type: ['string', 'null'] },
+        draftSlot: { type: ['number', 'null'] },
         picks: {
           type: 'array',
           items: {
@@ -120,7 +134,7 @@ export const portalSnapshotJsonSchema = {
           },
         },
       },
-      required: ['status', 'onClockTeamId', 'picks'],
+      required: ['status', 'onClockTeamId', 'draftSlot', 'picks'],
       additionalProperties: false,
     },
     observedAt: { type: 'string', format: 'date-time' },
@@ -132,6 +146,7 @@ export const portalSnapshotJsonSchema = {
     'page',
     'roster',
     'availablePlayers',
+    'leagueTeams',
     'waiverClaims',
     'tradeOffers',
     'draft',
@@ -148,6 +163,31 @@ export const portalSnapshotJsonSchema = {
         nflTeam: { type: ['string', 'null'] },
       },
       required: ['playerId', 'name', 'position', 'nflTeam'],
+      additionalProperties: false,
+    },
+    availablePlayer: {
+      type: 'object',
+      properties: {
+        playerId: { type: 'string' },
+        name: { type: 'string' },
+        position: { type: 'string' },
+        nflTeam: { type: ['string', 'null'] },
+        acquisitionType: {
+          type: 'string',
+          enum: ['waiver', 'free_agent', 'unknown'],
+        },
+      },
+      required: ['playerId', 'name', 'position', 'nflTeam', 'acquisitionType'],
+      additionalProperties: false,
+    },
+    leagueTeam: {
+      type: 'object',
+      properties: {
+        teamId: { type: 'string' },
+        name: { type: 'string' },
+        roster: { type: 'array', items: { $ref: '#/$defs/player' } },
+      },
+      required: ['teamId', 'name', 'roster'],
       additionalProperties: false,
     },
     rosterEntry: {

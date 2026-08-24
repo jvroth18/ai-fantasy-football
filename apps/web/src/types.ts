@@ -129,12 +129,16 @@ export type PortalSnapshotView = {
     teamId: string;
     page: string;
     roster: Array<PortalPlayer & { slot: string; locked: boolean }>;
-    availablePlayers: PortalPlayer[];
+    availablePlayers: Array<
+      PortalPlayer & { acquisitionType: 'waiver' | 'free_agent' | 'unknown' }
+    >;
+    leagueTeams: Array<{ teamId: string; name: string; roster: PortalPlayer[] }>;
     waiverClaims: Array<{ actionId: string; status: string }>;
     tradeOffers: Array<{ actionId: string; status: string }>;
     draft: {
       status: 'pre_draft' | 'live' | 'complete';
       onClockTeamId: string | null;
+      draftSlot: number | null;
       picks: Array<{ actionId: string; teamId: string; playerId: string }>;
     };
     observedAt: string;
