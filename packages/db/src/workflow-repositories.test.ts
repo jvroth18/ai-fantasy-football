@@ -103,6 +103,10 @@ function recommendationFixture(teamId: string): RecommendationV1 {
     projectedWinProbabilityDelta: 0.04,
     risk: 0.3,
     confidence: 0.8,
+    action: {
+      type: 'waiver_claim',
+      payload: { addPlayerId: 'add-1', dropPlayerId: 'drop-1', bid: 7 },
+    },
     evidence: [
       {
         sourceType: 'provider',

@@ -244,8 +244,15 @@ function recommendation(
   type: RecommendationV1['type'],
   values: Omit<
     RecommendationV1,
-    'schemaVersion' | 'id' | 'teamId' | 'type' | 'alternativeIds' | 'createdAt' | 'expiresAt'
-  >,
+    | 'schemaVersion'
+    | 'id'
+    | 'teamId'
+    | 'type'
+    | 'action'
+    | 'alternativeIds'
+    | 'createdAt'
+    | 'expiresAt'
+  > & { action?: RecommendationV1['action'] },
   now: Date,
 ): RecommendationV1 {
   return {
@@ -254,6 +261,7 @@ function recommendation(
     teamId,
     type,
     ...values,
+    action: values.action ?? null,
     alternativeIds: [],
     createdAt: now.toISOString(),
     expiresAt: expiryFor(type, now),
@@ -546,6 +554,18 @@ export class TeamDecisionOrchestrator {
             : `${change.playerId}: ${change.fromSlot} to ${change.toSlot}`;
         })
         .join('; ');
+      const starterSlotTypes = starterSlots(rules);
+      const primaryChange = optimized.changes.find(
+        (change) => starterSlotTypes.has(change.toSlot) && !starterSlotTypes.has(change.fromSlot),
+      );
+      const playerOut = primaryChange
+        ? roster.find(
+            (player) =>
+              player.playerId !== primaryChange.playerId &&
+              player.currentSlot === primaryChange.toSlot &&
+              player.currentSlotIndex === primaryChange.toSlotIndex,
+          )
+        : undefined;
       result.push(
         recommendation(
           team.id,
@@ -562,6 +582,17 @@ export class TeamDecisionOrchestrator {
             ),
             confidence: clamp(average(changed.map((player) => player.mappingConfidence))),
             evidence: evidenceFor(portal, rules, changed, now.toISOString()),
+            action:
+              primaryChange && playerOut && !playerOut.locked
+                ? {
+                    type: 'lineup_change',
+                    payload: {
+                      playerInId: primaryChange.playerId,
+                      playerOutId: playerOut.playerId,
+                      targetSlot: primaryChange.toSlot,
+                    },
+                  }
+                : null,
           },
           now,
         ),
@@ -712,6 +743,24 @@ export class TeamDecisionOrchestrator {
               (move.actionType === 'waiver_claim' ? 0.95 : 1),
           ),
           evidence: evidenceFor(portal, rules, related, now.toISOString()),
+          action:
+            move.actionType === 'waiver_claim'
+              ? {
+                  type: 'waiver_claim',
+                  payload: {
+                    addPlayerId: move.add.playerId,
+                    dropPlayerId: move.drop?.playerId ?? null,
+                    bid: move.bid,
+                  },
+                }
+              : {
+                  type: 'free_agent_move',
+                  payload: {
+                    addPlayerId: move.add.playerId,
+                    dropPlayerId: move.drop?.playerId ?? null,
+                    targetSlot: 'BENCH',
+                  },
+                },
         },
         now,
       );
@@ -776,6 +825,10 @@ export class TeamDecisionOrchestrator {
             risk: clamp(Math.max(ranking.player.injuryRisk, ranking.player.bustRisk)),
             confidence: ranking.player.mappingConfidence,
             evidence: evidenceFor(portal, rules, [valuedPlayer], now.toISOString()),
+            action:
+              portal.snapshot.draft.onClockTeamId === team.espnTeamId && ranking.autoPickEligible
+                ? { type: 'draft_pick', payload: { playerId: ranking.player.playerId } }
+                : null,
           },
           now,
         ),
@@ -857,6 +910,14 @@ export class TeamDecisionOrchestrator {
           ),
           confidence: clamp(average(related.map((player) => player.mappingConfidence))),
           evidence: evidenceFor(portal, rules, related, now.toISOString()),
+          action: {
+            type: 'trade_offer',
+            payload: {
+              opponentTeamId: proposal.opponentTeamId,
+              sendPlayerIds: proposal.send.map((player) => player.playerId),
+              receivePlayerIds: proposal.receive.map((player) => player.playerId),
+            },
+          },
         },
         now,
       );

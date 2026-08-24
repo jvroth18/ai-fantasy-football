@@ -238,6 +238,45 @@ export const projectionV1Schema = z
     message: 'Projection percentiles must be ordered p10 <= p50 <= p90',
   });
 
+export const recommendationActionSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('lineup_change'),
+    payload: z.object({
+      playerInId: z.string().min(1),
+      playerOutId: z.string().min(1),
+      targetSlot: z.string().min(1),
+    }),
+  }),
+  z.object({
+    type: z.literal('waiver_claim'),
+    payload: z.object({
+      addPlayerId: z.string().min(1),
+      dropPlayerId: z.string().min(1).nullable(),
+      bid: z.number().int().min(0).nullable(),
+    }),
+  }),
+  z.object({
+    type: z.literal('free_agent_move'),
+    payload: z.object({
+      addPlayerId: z.string().min(1),
+      dropPlayerId: z.string().min(1).nullable(),
+      targetSlot: z.string().min(1),
+    }),
+  }),
+  z.object({
+    type: z.literal('draft_pick'),
+    payload: z.object({ playerId: z.string().min(1) }),
+  }),
+  z.object({
+    type: z.literal('trade_offer'),
+    payload: z.object({
+      opponentTeamId: z.string().min(1),
+      sendPlayerIds: z.array(z.string().min(1)).min(1),
+      receivePlayerIds: z.array(z.string().min(1)).min(1),
+    }),
+  }),
+]);
+
 export const recommendationV1Schema = z.object({
   schemaVersion: z.literal(1),
   id: entityIdSchema,
@@ -250,6 +289,7 @@ export const recommendationV1Schema = z.object({
   risk: z.number().min(0).max(1),
   confidence: z.number().min(0).max(1),
   evidence: z.array(sourceEvidenceSchema).min(1),
+  action: recommendationActionSchema.nullable(),
   alternativeIds: z.array(entityIdSchema).default([]),
   createdAt: isoDateTimeSchema,
   expiresAt: isoDateTimeSchema,
@@ -308,6 +348,7 @@ export type AutomationPolicy = z.infer<typeof automationPolicySchema>;
 export type TeamConfigV1 = z.infer<typeof teamConfigV1Schema>;
 export type PlayerIdentityV1 = z.infer<typeof playerIdentityV1Schema>;
 export type ProjectionV1 = z.infer<typeof projectionV1Schema>;
+export type RecommendationAction = z.infer<typeof recommendationActionSchema>;
 export type RecommendationV1 = z.infer<typeof recommendationV1Schema>;
 export type ActionIntentV1 = z.infer<typeof actionIntentV1Schema>;
 export type AutomationRunV1 = z.infer<typeof automationRunV1Schema>;

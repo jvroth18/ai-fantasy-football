@@ -160,6 +160,10 @@ export type Recommendation = {
   projectedWinProbabilityDelta: number | null;
   risk: number;
   confidence: number;
+  action: {
+    type: 'lineup_change' | 'waiver_claim' | 'free_agent_move' | 'draft_pick' | 'trade_offer';
+    payload: Record<string, unknown>;
+  } | null;
   createdAt: string;
   expiresAt: string;
 };

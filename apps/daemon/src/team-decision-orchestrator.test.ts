@@ -296,8 +296,19 @@ describe('TeamDecisionOrchestrator', () => {
     expect(recommendations.find((item) => item.type === 'lineup')?.rationale).toContain(
       'Breakout Runner',
     );
+    expect(recommendations.find((item) => item.type === 'lineup')?.action).toEqual({
+      type: 'lineup_change',
+      payload: {
+        playerInId: 'bench-rb',
+        playerOutId: 'starter-rb',
+        targetSlot: 'RB',
+      },
+    });
     expect(recommendations.find((item) => item.type === 'waiver')?.title).toContain(
       'Waiver Receiver',
+    );
+    expect(recommendations.find((item) => item.type === 'waiver')?.action?.type).toBe(
+      'waiver_claim',
     );
     expect(recommendations.every((item) => item.evidence.length >= 3)).toBe(true);
   });
@@ -372,6 +383,7 @@ describe('TeamDecisionOrchestrator', () => {
     expect(result).toMatchObject({ status: 'verified' });
     expect(recommendations).toHaveLength(1);
     expect(recommendations[0]).toMatchObject({ type: 'trade' });
+    expect(recommendations[0]?.action?.type).toBe('trade_offer');
     expect(recommendations[0]?.rationale).toContain('Sunday Rivals');
   });
 
