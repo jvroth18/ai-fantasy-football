@@ -240,6 +240,8 @@ describe('local daemon API', () => {
         roster: [],
         availablePlayers: [],
         leagueTeams: [],
+        faabRemaining: 100,
+        faabSpentThisWeek: 0,
         waiverClaims: [],
         tradeOffers: [],
         draft: {

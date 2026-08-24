@@ -5,10 +5,12 @@ const portalPlayerSchema = z.object({
   name: z.string().min(1),
   position: z.string().min(1),
   nflTeam: z.string().nullable(),
+  availability: z.enum(['active', 'questionable', 'doubtful', 'out', 'ir', 'suspended', 'unknown']),
 });
 
 const availablePlayerSchema = portalPlayerSchema.extend({
   acquisitionType: z.enum(['waiver', 'free_agent', 'unknown']),
+  rosteredPercent: z.number().min(0).max(100).nullable(),
 });
 
 const rosterEntrySchema = portalPlayerSchema.extend({
@@ -46,6 +48,8 @@ export const espnPortalSnapshotSchema = z.object({
   roster: z.array(rosterEntrySchema),
   availablePlayers: z.array(availablePlayerSchema),
   leagueTeams: z.array(leagueTeamSchema),
+  faabRemaining: z.number().int().min(0).nullable(),
+  faabSpentThisWeek: z.number().int().min(0).nullable(),
   waiverClaims: z.array(waiverClaimSchema),
   tradeOffers: z.array(tradeOfferSchema),
   draft: z.object({
@@ -112,6 +116,8 @@ export const portalSnapshotJsonSchema = {
     roster: { type: 'array', items: { $ref: '#/$defs/rosterEntry' } },
     availablePlayers: { type: 'array', items: { $ref: '#/$defs/availablePlayer' } },
     leagueTeams: { type: 'array', items: { $ref: '#/$defs/leagueTeam' } },
+    faabRemaining: { type: ['number', 'null'] },
+    faabSpentThisWeek: { type: ['number', 'null'] },
     waiverClaims: { type: 'array', items: { $ref: '#/$defs/waiverClaim' } },
     tradeOffers: { type: 'array', items: { $ref: '#/$defs/tradeOffer' } },
     draft: {
@@ -147,6 +153,8 @@ export const portalSnapshotJsonSchema = {
     'roster',
     'availablePlayers',
     'leagueTeams',
+    'faabRemaining',
+    'faabSpentThisWeek',
     'waiverClaims',
     'tradeOffers',
     'draft',
@@ -161,8 +169,12 @@ export const portalSnapshotJsonSchema = {
         name: { type: 'string' },
         position: { type: 'string' },
         nflTeam: { type: ['string', 'null'] },
+        availability: {
+          type: 'string',
+          enum: ['active', 'questionable', 'doubtful', 'out', 'ir', 'suspended', 'unknown'],
+        },
       },
-      required: ['playerId', 'name', 'position', 'nflTeam'],
+      required: ['playerId', 'name', 'position', 'nflTeam', 'availability'],
       additionalProperties: false,
     },
     availablePlayer: {
@@ -172,12 +184,25 @@ export const portalSnapshotJsonSchema = {
         name: { type: 'string' },
         position: { type: 'string' },
         nflTeam: { type: ['string', 'null'] },
+        availability: {
+          type: 'string',
+          enum: ['active', 'questionable', 'doubtful', 'out', 'ir', 'suspended', 'unknown'],
+        },
         acquisitionType: {
           type: 'string',
           enum: ['waiver', 'free_agent', 'unknown'],
         },
+        rosteredPercent: { type: ['number', 'null'] },
       },
-      required: ['playerId', 'name', 'position', 'nflTeam', 'acquisitionType'],
+      required: [
+        'playerId',
+        'name',
+        'position',
+        'nflTeam',
+        'availability',
+        'acquisitionType',
+        'rosteredPercent',
+      ],
       additionalProperties: false,
     },
     leagueTeam: {
@@ -197,10 +222,14 @@ export const portalSnapshotJsonSchema = {
         name: { type: 'string' },
         position: { type: 'string' },
         nflTeam: { type: ['string', 'null'] },
+        availability: {
+          type: 'string',
+          enum: ['active', 'questionable', 'doubtful', 'out', 'ir', 'suspended', 'unknown'],
+        },
         slot: { type: 'string' },
         locked: { type: 'boolean' },
       },
-      required: ['playerId', 'name', 'position', 'nflTeam', 'slot', 'locked'],
+      required: ['playerId', 'name', 'position', 'nflTeam', 'availability', 'slot', 'locked'],
       additionalProperties: false,
     },
     waiverClaim: {

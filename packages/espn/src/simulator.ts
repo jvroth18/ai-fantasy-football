@@ -104,7 +104,9 @@ export class SimulatedEspnPortal implements EspnPortalAdapter {
               name: dropped.name,
               position: dropped.position,
               nflTeam: dropped.nflTeam,
+              availability: dropped.availability,
               acquisitionType: 'waiver',
+              rosteredPercent: null,
             });
           }
         }
@@ -113,6 +115,7 @@ export class SimulatedEspnPortal implements EspnPortalAdapter {
           name: added.name,
           position: added.position,
           nflTeam: added.nflTeam,
+          availability: added.availability,
           slot: action.targetSlot,
           locked: false,
         });
@@ -138,6 +141,7 @@ export class SimulatedEspnPortal implements EspnPortalAdapter {
           name: player.name,
           position: player.position,
           nflTeam: player.nflTeam,
+          availability: player.availability,
           slot: 'BENCH',
           locked: false,
         });

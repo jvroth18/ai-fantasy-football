@@ -113,6 +113,7 @@ export type PortalPlayer = {
   name: string;
   position: string;
   nflTeam: string | null;
+  availability: 'active' | 'questionable' | 'doubtful' | 'out' | 'ir' | 'suspended' | 'unknown';
 };
 
 export type PortalSnapshotView = {
@@ -130,9 +131,14 @@ export type PortalSnapshotView = {
     page: string;
     roster: Array<PortalPlayer & { slot: string; locked: boolean }>;
     availablePlayers: Array<
-      PortalPlayer & { acquisitionType: 'waiver' | 'free_agent' | 'unknown' }
+      PortalPlayer & {
+        acquisitionType: 'waiver' | 'free_agent' | 'unknown';
+        rosteredPercent: number | null;
+      }
     >;
     leagueTeams: Array<{ teamId: string; name: string; roster: PortalPlayer[] }>;
+    faabRemaining: number | null;
+    faabSpentThisWeek: number | null;
     waiverClaims: Array<{ actionId: string; status: string }>;
     tradeOffers: Array<{ actionId: string; status: string }>;
     draft: {
