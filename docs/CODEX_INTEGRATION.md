@@ -20,7 +20,9 @@ The check is read-only. It reports whether decisions and ESPN Computer Use are r
 - Every request and completed turn is correlated by its exact JSON-RPC, thread, and turn identifiers.
 - A caller can interrupt a specific in-flight turn.
 
-Browser mutations are not granted by this client. The ESPN adapter creates a separate, reviewable action intent and applies its own safety policy before asking Codex Computer Use to execute anything.
+Player valuation turns receive an exact bounded player-ID set, the active scoring rules, strategy, current attributed news, and an explicit weekly, rest-of-season, or draft horizon. Their output is rejected if Codex omits, duplicates, or invents an ID. Deterministic application code—not Codex—then applies roster legality, positional demand, FAAB limits, trade fairness, and automation policy.
+
+Browser mutations are not granted by ordinary decision threads. The ESPN action service creates a separate ephemeral Computer Use thread only after a typed action intent, armed per-action policy, current snapshot, and explicit execution confirmation exist.
 
 ## Protocol compatibility
 

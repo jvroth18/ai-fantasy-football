@@ -177,4 +177,70 @@ describe('application shell', () => {
       await screen.findByRole('heading', { name: 'Finish the setup. Then attack the week.' }),
     ).toBeInTheDocument();
   });
+
+  it('requires a visible confirmation before executing an armed recommendation', async () => {
+    const configuredTeam: Team = {
+      ...team(),
+      automation: { ...team().automation, armed: true, lineupChanges: true },
+    };
+    const teamDetail: TeamDetail = {
+      ...detail(configuredTeam),
+      recommendations: [
+        {
+          id: '17af5374-13fb-44af-b1c9-eb1fa5a99e70',
+          type: 'lineup',
+          title: 'Start Breakout Runner',
+          rationale: 'The weekly projection is materially higher.',
+          projectedPointDelta: 4.8,
+          projectedWinProbabilityDelta: null,
+          risk: 0.2,
+          confidence: 0.91,
+          action: {
+            type: 'lineup_change',
+            payload: {
+              playerInId: 'bench-rb',
+              playerOutId: 'starter-rb',
+              targetSlot: 'RB',
+            },
+          },
+          createdAt: now,
+          expiresAt: '2026-08-24T18:00:00.000Z',
+        },
+      ],
+    };
+    const fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/bootstrap') return response(bootstrap([configuredTeam]));
+      if (url === `/api/teams/${configuredTeam.id}`) return response(teamDetail);
+      if (
+        url ===
+          `/api/teams/${configuredTeam.id}/recommendations/${teamDetail.recommendations[0]?.id}/execute` &&
+        init?.method === 'POST'
+      ) {
+        return response({
+          outcome: 'verified',
+          performed: true,
+          replayed: false,
+          evidence: ['Post-action observation matched the exact intent'],
+          errorCode: null,
+        });
+      }
+      return response({ error: 'NOT_FOUND' }, 404);
+    });
+    vi.stubGlobal('fetch', fetch);
+    const confirm = vi.fn(() => true);
+    vi.stubGlobal('confirm', confirm);
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Execute on ESPN' }));
+
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('Start Breakout Runner'));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        `/api/teams/${configuredTeam.id}/recommendations/${teamDetail.recommendations[0]?.id}/execute`,
+        expect.objectContaining({ method: 'POST' }),
+      ),
+    );
+    expect(await screen.findByText('ESPN action verified by read-back')).toBeInTheDocument();
+  });
 });

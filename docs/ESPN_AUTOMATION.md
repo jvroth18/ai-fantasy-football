@@ -18,7 +18,9 @@ Accepted observations are saved as team-scoped SQLite snapshots with a SHA-256 c
 6. Observe again and verify the intended state.
 7. Mark the action `verified`, `failed`, or `needs_attention` with before/after digests and short evidence.
 
-If a browser response is ambiguous, the read-back determines success. If read-back cannot prove success, the action stops at `needs_attention`; a scheduler cannot blindly retry it. Incoming trade acceptance is not represented by the action schema and remains permanently manual.
+The UI exposes execution only when a recommendation contains a validated action payload. The team must first be armed with the matching action class, and the user must confirm the exact recommendation again. The daemon then creates the intent and calls the executor through `POST /api/teams/:teamId/recommendations/:recommendationId/execute`. Advisory alerts never expose an execute control.
+
+If a browser response is ambiguous, the read-back determines success. If read-back cannot prove success, the action stops at `needs_attention`; neither the scheduler nor UI can blindly retry it. Observations immediately before and after an attempt are stored as verified local snapshots. Incoming trade acceptance is not represented by the action schema and remains permanently manual.
 
 ## Simulator-first development
 

@@ -1,6 +1,6 @@
 # Local daemon
 
-The daemon is the single local control plane for team configuration, data refreshes, scheduled analysis, and future ESPN Computer Use sessions. It binds to `127.0.0.1:4318` by default and stores state in `var/app.sqlite`.
+The daemon is the single local control plane for team configuration, data refreshes, scheduled analysis, and ESPN Computer Use sessions. It binds to `127.0.0.1:4318` by default and stores state in `var/app.sqlite`.
 
 ## Configuration
 
@@ -20,11 +20,14 @@ No ESPN password, session cookie, or Codex credential is stored in the database 
 3. Review the returned draft and conflicts. Activate a specific immutable revision with `POST /api/teams/:teamId/rules/:ruleSetId/activate`.
 4. Save a strategy with `PUT /api/teams/:teamId/strategy`.
 5. Run public data/news jobs or management jobs with `POST /api/teams/:teamId/jobs/:jobType/run`.
+6. Sync current visible ESPN state with `POST /api/teams/:teamId/espn/sync`. Analysis jobs also request a read-only refresh when the stored snapshot is too old.
 
 JSON rule sets are parsed deterministically. CSV scoring overlays require an existing full rule version. PDF, image, Markdown, and plain-text extraction uses an ephemeral, read-only Codex turn. Binary uploads are written with owner-only permissions inside `var/rule-uploads` and removed after the turn, including on failure.
 
 ## Mutation safety
 
 `PUT /api/teams/:teamId/automation` will not transition a team from disarmed to armed unless the request includes the exact confirmation `ARM ESPN AUTOMATION`. Individual action classes remain separately disabled, incoming trade acceptance is structurally prohibited, and the ESPN executor still applies its own policy check and read-back proof.
+
+An actionable recommendation can be submitted with `POST /api/teams/:teamId/recommendations/:recommendationId/execute` and body `{ "confirmation": "EXECUTE ESPN ACTION" }`. The endpoint rejects expired, cross-team, and advisory-only recommendations. It records a typed intent and team-scoped idempotency key before opening a mutation-capable Computer Use thread. A repeated request returns the stored result and cannot submit the same action twice.
 
 `GET /api/bootstrap` returns teams, schedules, latest data snapshot metadata, and a sanitized Codex readiness summary. It never returns model descriptions, skill bodies, credentials, or browser session data.

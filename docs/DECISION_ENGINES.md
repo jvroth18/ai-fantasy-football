@@ -1,6 +1,6 @@
 # Decision engines
 
-`@ai-ff/workflows` owns the deterministic core of every recommendation. Codex receives the calculated candidates, constraints, uncertainty, and source evidence so it can synthesize a clear plan; it cannot change roster legality, automation policy, FAAB caps, or idempotency rules.
+`@ai-ff/workflows` owns the deterministic core of every recommendation. A bounded Codex turn estimates scoring-specific percentiles, replacement baselines, ADP, tiers, injury risk, breakout/bust risk, and identity confidence for an exact portal-derived player list. The application rejects incomplete or extra IDs, applies transparent news multipliers, and then runs deterministic engines. Codex cannot change roster legality, automation policy, FAAB caps, trade fairness, or idempotency rules.
 
 ## Draft
 
@@ -23,3 +23,5 @@ RSS metadata and short excerpts are linked to canonical players, then classified
 The proposal generator searches one- and two-player packages, excludes protected outgoing and blocked incoming players, requires market value within a configured fair band, and requires positive roster-fit gain for the user without projecting harm to the opponent. These are outgoing proposals only; incoming acceptance remains manual.
 
 All formula outputs include component reasons and uncertainty. They should be backtested and calibrated during the season instead of being treated as truth.
+
+Successful jobs atomically expire prior advice of the same type and persist the replacement set with the verified ESPN digest, active rule evidence, and consulted public source URLs. If ESPN, Codex, rules, strategy, or public player data is unavailable, the job returns `needs_attention` and preserves the last valid advice.
