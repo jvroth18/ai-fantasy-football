@@ -2,7 +2,7 @@
 
 The baseline is designed to operate without paid sports-data subscriptions.
 
-- **nflverse**: historical and current NFL datasets. Dataset-specific attribution and upstream ownership terms apply.
+- **nflverse**: historical and current NFL datasets. Player statistics from 2023 onward are CC BY-SA 4.0 and must be credited to FTN Data via nflverse; older datasets have their own documented attribution and upstream ownership terms.
 - **Sleeper public API**: player metadata and public add/drop trend signals. Its API is documented for non-commercial use and should not be called more frequently than its guidance permits.
 - **CollegeFootballData / open college datasets**: optional rookie enrichment. A user-provided free key may be used when available.
 - **RSS/Atom and Codex web research**: news metadata, links, citations, and short feed-provided excerpts only; full articles are not republished. The default feed is ESPN's public NFL Headlines RSS feed. Any interface that displays feed content must name the source and link to the original item.

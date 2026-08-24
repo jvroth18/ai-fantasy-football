@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@ai-ff/domain": "workspace:*",
+    "csv-parse": "latest",
     "fast-xml-parser": "latest",
     "zod": "latest"
   }

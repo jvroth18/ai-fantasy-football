@@ -1,6 +1,14 @@
 import { z } from 'zod';
 
-import type { FetchLike, NflverseAsset, ProviderMetadata, ProviderSnapshot } from './types.js';
+import { parse } from 'csv-parse/sync';
+
+import type {
+  FetchLike,
+  NflverseAsset,
+  PlayerSeasonStats,
+  ProviderMetadata,
+  ProviderSnapshot,
+} from './types.js';
 import { digestJson } from './utils.js';
 
 const githubAssetSchema = z.object({
@@ -16,14 +24,14 @@ const releaseSchema = z.object({ assets: z.array(githubAssetSchema) });
 export const nflverseMetadata: ProviderMetadata = {
   id: 'nflverse',
   displayName: 'nflverse data releases',
-  license: 'CC BY 4.0 repository license; underlying NFL data ownership terms apply',
+  license: 'CC BY-SA 4.0 for 2023+ player stats; credit FTN Data via nflverse',
   termsUrl: 'https://github.com/nflverse/nflverse-data',
   minimumRefreshMinutes: 360,
 };
 
 export const supportedNflverseDatasets = [
   'players',
-  'player_stats',
+  'stats_player',
   'rosters',
   'injuries',
   'depth_charts',
@@ -66,6 +74,44 @@ export class NflverseProvider {
       fetchedAt: this.now().toISOString(),
       sourceUrl: url,
       digest: digestJson(release),
+      records,
+    };
+  }
+
+  async fetchPlayerSeasonStats(season: number): Promise<ProviderSnapshot<PlayerSeasonStats>> {
+    const url = `https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_reg_${season}.csv`;
+    const response = await this.fetcher(url, {
+      headers: { accept: 'text/csv', 'user-agent': 'ai-fantasy-football/0.1' },
+    });
+    if (!response.ok)
+      throw new Error(`nflverse player stats ${season} failed with HTTP ${response.status}`);
+    const text = await response.text();
+    const rows = parse(text, { columns: true, skip_empty_lines: true }) as Array<
+      Record<string, string>
+    >;
+    const number = (value: string | undefined) => {
+      const parsed = Number(value ?? 0);
+      return Number.isFinite(parsed) ? parsed : 0;
+    };
+    const records = rows
+      .filter((row) => Boolean(row.player_id))
+      .map((row) => ({
+        gsisId: row.player_id!,
+        season,
+        games: number(row.games),
+        fantasyPoints: number(row.fantasy_points),
+        fantasyPointsPpr: number(row.fantasy_points_ppr),
+        passingAttempts: number(row.attempts),
+        carries: number(row.carries),
+        targets: number(row.targets),
+        receptions: number(row.receptions),
+        touchdowns: number(row.passing_tds) + number(row.rushing_tds) + number(row.receiving_tds),
+      }));
+    return {
+      provider: nflverseMetadata,
+      fetchedAt: this.now().toISOString(),
+      sourceUrl: url,
+      digest: digestJson(records),
       records,
     };
   }
