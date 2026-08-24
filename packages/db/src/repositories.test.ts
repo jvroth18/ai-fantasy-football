@@ -124,9 +124,12 @@ describe('team-scoped persistence', () => {
     const second = rules.create(makeRules(team.id, 2));
 
     teams.activateRuleSet(team.id, first.id, now);
+    expect(rules.getForTeam(team.id, first.id)?.status).toBe('active');
     const activated = teams.activateRuleSet(team.id, second.id, '2026-08-24T12:00:00.000Z');
 
     expect(activated.activeRuleSetId).toBe(second.id);
+    expect(rules.getForTeam(team.id, first.id)?.status).toBe('retired');
+    expect(rules.getForTeam(team.id, second.id)?.status).toBe('active');
     const statuses = handle.raw
       .prepare('SELECT id, status FROM league_rule_sets WHERE team_id = ? ORDER BY revision')
       .all(team.id) as { id: string; status: string }[];

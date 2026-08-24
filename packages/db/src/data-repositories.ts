@@ -105,4 +105,8 @@ export class NewsRepository {
       })
       .run();
   }
+
+  listRecent(limit = 200): Array<typeof newsItems.$inferSelect> {
+    return this.db.select().from(newsItems).orderBy(desc(newsItems.publishedAt)).limit(limit).all();
+  }
 }

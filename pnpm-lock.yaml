@@ -47,9 +47,33 @@ importers:
 
   apps/daemon:
     dependencies:
+      '@ai-ff/codex':
+        specifier: workspace:*
+        version: link:../../packages/codex
+      '@ai-ff/data':
+        specifier: workspace:*
+        version: link:../../packages/data
+      '@ai-ff/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@ai-ff/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@ai-ff/rules':
+        specifier: workspace:*
+        version: link:../../packages/rules
+      '@ai-ff/scheduler':
+        specifier: workspace:*
+        version: link:../../packages/scheduler
+      '@ai-ff/workflows':
+        specifier: workspace:*
+        version: link:../../packages/workflows
       '@fastify/cors':
         specifier: latest
         version: 11.3.0
+      better-sqlite3:
+        specifier: latest
+        version: 13.0.3
       fastify:
         specifier: latest
         version: 5.12.1

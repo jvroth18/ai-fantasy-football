@@ -45,5 +45,12 @@ describe('local team scheduler', () => {
     );
     expect(entries.find((entry) => entry.teamId === west.id)?.timeZone).toBe('America/Los_Angeles');
     expect(entries.every((entry) => entry.nextRun !== null)).toBe(true);
+
+    const triggered = await scheduler.trigger(east.id, 'daily_manager');
+    expect(triggered).toMatchObject({
+      teamId: east.id,
+      jobType: 'daily_manager',
+      status: 'verified',
+    });
   });
 });

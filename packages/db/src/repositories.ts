@@ -29,6 +29,11 @@ function toTeam(row: typeof teams.$inferSelect): TeamConfigV1 {
   });
 }
 
+function toRuleSet(row: typeof leagueRuleSets.$inferSelect): LeagueRuleSetV1 {
+  const stored = JSON.parse(row.ruleSetJson) as Record<string, unknown>;
+  return leagueRuleSetV1Schema.parse({ ...stored, status: row.status });
+}
+
 export class TeamRepository {
   constructor(private readonly db: AppDatabase) {}
 
@@ -157,7 +162,7 @@ export class RuleSetRepository {
       .where(eq(leagueRuleSets.teamId, teamId))
       .orderBy(asc(leagueRuleSets.revision))
       .all()
-      .map((row) => leagueRuleSetV1Schema.parse(JSON.parse(row.ruleSetJson)));
+      .map(toRuleSet);
   }
 
   getForTeam(teamId: string, ruleSetId: string): LeagueRuleSetV1 | null {
@@ -166,6 +171,6 @@ export class RuleSetRepository {
       .from(leagueRuleSets)
       .where(and(eq(leagueRuleSets.teamId, teamId), eq(leagueRuleSets.id, ruleSetId)))
       .get();
-    return row ? leagueRuleSetV1Schema.parse(JSON.parse(row.ruleSetJson)) : null;
+    return row ? toRuleSet(row) : null;
   }
 }

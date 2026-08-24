@@ -32,6 +32,8 @@ The football decision layer ranks draft picks, optimizes legal lineups, pairs ad
 
 The local scheduler runs team-specific refresh and management jobs in each league's configured timezone, prevents overlaps with durable leases, and performs one bounded catch-up after downtime. See [docs/SCHEDULING.md](docs/SCHEDULING.md).
 
+Team onboarding, rule upload/review, strategy configuration, automation arming, and manual management runs are exposed through the loopback-only daemon API. Uploaded binary rule files are held only long enough for a read-only Codex extraction turn and then removed. See [docs/LOCAL_DAEMON.md](docs/LOCAL_DAEMON.md).
+
 ## Verification
 
 ```bash

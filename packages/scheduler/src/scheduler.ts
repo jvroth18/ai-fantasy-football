@@ -2,7 +2,7 @@ import type { TeamRepository } from '@ai-ff/db';
 import { Cron } from 'croner';
 
 import type { DurableJobRunner } from './runner.js';
-import type { JobDefinition, SchedulerEntry } from './types.js';
+import type { JobDefinition, ManagementJobType, RunResult, SchedulerEntry } from './types.js';
 
 export class LocalTeamScheduler {
   readonly #jobs: Array<{ cron: Cron; entry: Omit<SchedulerEntry, 'nextRun'> }> = [];
@@ -45,6 +45,14 @@ export class LocalTeamScheduler {
       ...entry,
       nextRun: cron.nextRun()?.toISOString() ?? null,
     }));
+  }
+
+  async trigger(teamId: string, jobType: ManagementJobType): Promise<RunResult> {
+    const team = this.teams.getById(teamId);
+    if (!team) throw new Error('Team not found');
+    const definition = this.definitions.find((candidate) => candidate.jobType === jobType);
+    if (!definition) throw new Error('Management job not configured');
+    return await this.runner.run(team, definition);
   }
 
   stop(): void {
