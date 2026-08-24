@@ -389,6 +389,143 @@ export const fanPostV1Schema = z.object({
   emailedAt: isoDateTimeSchema.nullable(),
 });
 
+export const fanEventTypeSchema = z.enum([
+  'espn.snapshot.updated',
+  'news.item.created',
+  'league.signal.detected',
+  'analysis.ready',
+  'fan.post.drafted',
+  'fan.post.approved',
+  'fan.post.published',
+  'fan.mention.received',
+  'fan.reply.drafted',
+  'fan.reply.approved',
+  'digest.due',
+]);
+
+export const fanAgentRoleSchema = z.enum([
+  'observer',
+  'analyst',
+  'superfan',
+  'contrarian',
+  'commissioner',
+  'publisher',
+  'reply_writer',
+  'moderator',
+  'custom',
+]);
+
+export const fanModelConfigSchema = z.object({
+  provider: z.enum(['codex', 'openai', 'ollama', 'http', 'none']),
+  modelId: z.string().min(1).max(120),
+  temperature: z.number().min(0).max(2),
+  maxOutputTokens: z.number().int().min(64).max(16_000),
+});
+
+export const fanAgentSchema = z.object({
+  id: z.string().regex(/^[a-z0-9][a-z0-9_-]{1,48}$/),
+  name: z.string().min(1).max(80),
+  role: fanAgentRoleSchema,
+  instructions: z.string().max(4_000),
+  model: fanModelConfigSchema,
+  listensTo: z.array(fanEventTypeSchema).min(1),
+  emits: z.array(fanEventTypeSchema).default([]),
+  enabled: z.boolean(),
+  heat: z.number().min(0).max(1),
+  toolPermissions: z
+    .object({
+      readPortal: z.boolean(),
+      readNews: z.boolean(),
+      publish: z.boolean(),
+      reply: z.boolean(),
+    })
+    .default({ readPortal: true, readNews: true, publish: false, reply: false }),
+});
+
+export const fanNetworkPolicySchema = z.object({
+  requireEvidence: z.boolean().default(true),
+  identifyAsAi: z.boolean().default(true),
+  maxRepliesPerHour: z.number().int().min(0).max(10_000).default(20),
+  maxModelSpendPerDay: z.number().min(0).max(1_000).default(2),
+  maxTurnsPerEvent: z.number().int().min(1).max(20).default(8),
+  neverInventInjuries: z.boolean().default(true),
+  neverAcceptTrades: z.boolean().default(true),
+});
+
+export const fanNetworkRouteSchema = z.object({
+  event: fanEventTypeSchema,
+  to: z.array(z.string().regex(/^[a-z0-9][a-z0-9_-]{1,48}$/)).min(1),
+  parallel: z.boolean().default(true),
+});
+
+export const fanNetworkV1Schema = z
+  .object({
+    schemaVersion: z.literal(1),
+    id: entityIdSchema,
+    teamId: entityIdSchema,
+    name: z.string().min(1).max(120),
+    enabled: z.boolean(),
+    agents: z.array(fanAgentSchema).min(1).max(32),
+    routes: z.array(fanNetworkRouteSchema).min(1).max(64),
+    policies: fanNetworkPolicySchema,
+    createdAt: isoDateTimeSchema,
+    updatedAt: isoDateTimeSchema,
+  })
+  .superRefine((network, context) => {
+    const ids = new Set<string>();
+    for (const [index, agent] of network.agents.entries()) {
+      if (ids.has(agent.id)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['agents', index, 'id'],
+          message: 'Agent ids must be unique',
+        });
+      }
+      ids.add(agent.id);
+    }
+    for (const [index, route] of network.routes.entries()) {
+      for (const agentId of route.to) {
+        if (!ids.has(agentId)) {
+          context.addIssue({
+            code: 'custom',
+            path: ['routes', index, 'to'],
+            message: `Route references unknown agent ${agentId}`,
+          });
+        }
+      }
+    }
+  });
+
+export const fanNetworkEventV1Schema = z.object({
+  schemaVersion: z.literal(1),
+  id: entityIdSchema,
+  networkId: entityIdSchema,
+  teamId: entityIdSchema,
+  type: fanEventTypeSchema,
+  correlationId: entityIdSchema,
+  sourceAgentId: z.string().nullable(),
+  payload: z.record(z.string(), z.unknown()),
+  evidence: z.array(sourceEvidenceSchema).default([]),
+  createdAt: isoDateTimeSchema,
+});
+
+export const fanAgentRunV1Schema = z.object({
+  schemaVersion: z.literal(1),
+  id: entityIdSchema,
+  networkId: entityIdSchema,
+  teamId: entityIdSchema,
+  eventId: entityIdSchema,
+  agentId: z.string().regex(/^[a-z0-9][a-z0-9_-]{1,48}$/),
+  status: z.enum(['queued', 'executing', 'completed', 'skipped', 'failed']),
+  attempt: z.number().int().positive(),
+  outputEventIds: z.array(entityIdSchema),
+  errorCode: z.string().nullable(),
+  errorMessage: z.string().nullable(),
+  createdAt: isoDateTimeSchema,
+  startedAt: isoDateTimeSchema.nullable(),
+  finishedAt: isoDateTimeSchema.nullable(),
+});
+
 export type SourceEvidence = z.infer<typeof sourceEvidenceSchema>;
 export type ScoringRule = z.infer<typeof scoringRuleSchema>;
 export type LeagueRuleSetV1 = z.infer<typeof leagueRuleSetV1Schema>;
@@ -406,3 +543,12 @@ export type FanCadence = z.infer<typeof fanCadenceSchema>;
 export type FanDeskProfileV1 = z.infer<typeof fanDeskProfileV1Schema>;
 export type FanPostKind = z.infer<typeof fanPostKindSchema>;
 export type FanPostV1 = z.infer<typeof fanPostV1Schema>;
+export type FanEventType = z.infer<typeof fanEventTypeSchema>;
+export type FanAgentRole = z.infer<typeof fanAgentRoleSchema>;
+export type FanModelConfig = z.infer<typeof fanModelConfigSchema>;
+export type FanAgent = z.infer<typeof fanAgentSchema>;
+export type FanNetworkPolicy = z.infer<typeof fanNetworkPolicySchema>;
+export type FanNetworkRoute = z.infer<typeof fanNetworkRouteSchema>;
+export type FanNetworkV1 = z.infer<typeof fanNetworkV1Schema>;
+export type FanNetworkEventV1 = z.infer<typeof fanNetworkEventV1Schema>;
+export type FanAgentRunV1 = z.infer<typeof fanAgentRunV1Schema>;

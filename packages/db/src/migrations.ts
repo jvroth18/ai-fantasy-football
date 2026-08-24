@@ -254,6 +254,43 @@ const migrations = [
       CREATE INDEX fan_email_outbox_team_created_idx ON fan_email_outbox(team_id, created_at DESC);
     `,
   },
+  {
+    version: 7,
+    sql: `
+      CREATE TABLE fan_networks (
+        id TEXT PRIMARY KEY,
+        team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+        network_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        UNIQUE (team_id)
+      );
+      CREATE TABLE fan_network_events (
+        id TEXT PRIMARY KEY,
+        team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+        network_id TEXT NOT NULL REFERENCES fan_networks(id) ON DELETE CASCADE,
+        type TEXT NOT NULL,
+        correlation_id TEXT NOT NULL,
+        event_json TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX fan_network_events_team_created_idx ON fan_network_events(team_id, created_at DESC);
+      CREATE TABLE fan_agent_runs (
+        id TEXT PRIMARY KEY,
+        team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+        network_id TEXT NOT NULL REFERENCES fan_networks(id) ON DELETE CASCADE,
+        event_id TEXT NOT NULL REFERENCES fan_network_events(id) ON DELETE CASCADE,
+        agent_id TEXT NOT NULL,
+        status TEXT NOT NULL,
+        run_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        started_at TEXT,
+        finished_at TEXT,
+        UNIQUE (event_id, agent_id)
+      );
+      CREATE INDEX fan_agent_runs_team_created_idx ON fan_agent_runs(team_id, created_at DESC);
+    `,
+  },
 ] as const;
 
 export function applyMigrations(database: Database.Database): void {

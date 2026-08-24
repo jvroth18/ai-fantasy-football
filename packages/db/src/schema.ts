@@ -287,3 +287,58 @@ export const fanEmailOutbox = sqliteTable(
   },
   (table) => [index('fan_email_outbox_team_created_idx').on(table.teamId, table.createdAt)],
 );
+
+export const fanNetworks = sqliteTable(
+  'fan_networks',
+  {
+    id: text('id').primaryKey(),
+    teamId: text('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    networkJson: text('network_json').notNull(),
+    createdAt: text('created_at').notNull(),
+    updatedAt: text('updated_at').notNull(),
+  },
+  (table) => [uniqueIndex('fan_networks_team_unique').on(table.teamId)],
+);
+
+export const fanNetworkEvents = sqliteTable(
+  'fan_network_events',
+  {
+    id: text('id').primaryKey(),
+    teamId: text('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    networkId: text('network_id')
+      .notNull()
+      .references(() => fanNetworks.id, { onDelete: 'cascade' }),
+    type: text('type').notNull(),
+    correlationId: text('correlation_id').notNull(),
+    eventJson: text('event_json').notNull(),
+    createdAt: text('created_at').notNull(),
+  },
+  (table) => [index('fan_network_events_team_created_idx').on(table.teamId, table.createdAt)],
+);
+
+export const fanAgentRuns = sqliteTable(
+  'fan_agent_runs',
+  {
+    id: text('id').primaryKey(),
+    teamId: text('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    networkId: text('network_id')
+      .notNull()
+      .references(() => fanNetworks.id, { onDelete: 'cascade' }),
+    eventId: text('event_id')
+      .notNull()
+      .references(() => fanNetworkEvents.id, { onDelete: 'cascade' }),
+    agentId: text('agent_id').notNull(),
+    status: text('status').notNull(),
+    runJson: text('run_json').notNull(),
+    createdAt: text('created_at').notNull(),
+    startedAt: text('started_at'),
+    finishedAt: text('finished_at'),
+  },
+  (table) => [uniqueIndex('fan_agent_runs_event_agent_unique').on(table.eventId, table.agentId)],
+);
