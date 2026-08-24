@@ -176,6 +176,12 @@ importers:
         specifier: latest
         version: 4.4.3
 
+  packages/fan-desk:
+    dependencies:
+      '@ai-ff/domain':
+        specifier: workspace:*
+        version: link:../domain
+
   packages/rules:
     dependencies:
       '@ai-ff/domain':

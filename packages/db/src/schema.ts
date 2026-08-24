@@ -232,3 +232,58 @@ export const portalSnapshots = sqliteTable(
   },
   (table) => [index('portal_snapshots_team_observed_idx').on(table.teamId, table.observedAt)],
 );
+
+export const fanDeskProfiles = sqliteTable(
+  'fan_desk_profiles',
+  {
+    id: text('id').primaryKey(),
+    teamId: text('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    profileJson: text('profile_json').notNull(),
+    createdAt: text('created_at').notNull(),
+    updatedAt: text('updated_at').notNull(),
+  },
+  (table) => [uniqueIndex('fan_desk_profiles_team_unique').on(table.teamId)],
+);
+
+export const fanPosts = sqliteTable(
+  'fan_posts',
+  {
+    id: text('id').primaryKey(),
+    teamId: text('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    profileId: text('profile_id')
+      .notNull()
+      .references(() => fanDeskProfiles.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(),
+    status: text('status').notNull(),
+    postJson: text('post_json').notNull(),
+    createdAt: text('created_at').notNull(),
+    emailedAt: text('emailed_at'),
+  },
+  (table) => [index('fan_posts_team_created_idx').on(table.teamId, table.createdAt)],
+);
+
+export const fanEmailOutbox = sqliteTable(
+  'fan_email_outbox',
+  {
+    id: text('id').primaryKey(),
+    teamId: text('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    postId: text('post_id')
+      .notNull()
+      .references(() => fanPosts.id, { onDelete: 'cascade' }),
+    recipient: text('recipient').notNull(),
+    subject: text('subject').notNull(),
+    body: text('body').notNull(),
+    status: text('status').notNull(),
+    provider: text('provider').notNull(),
+    errorMessage: text('error_message'),
+    createdAt: text('created_at').notNull(),
+    sentAt: text('sent_at'),
+  },
+  (table) => [index('fan_email_outbox_team_created_idx').on(table.teamId, table.createdAt)],
+);

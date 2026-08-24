@@ -216,6 +216,44 @@ const migrations = [
       CREATE INDEX player_reviews_position_rank_idx ON player_reviews(position, position_rank);
     `,
   },
+  {
+    version: 6,
+    sql: `
+      CREATE TABLE fan_desk_profiles (
+        id TEXT PRIMARY KEY,
+        team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+        profile_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        UNIQUE (team_id)
+      );
+      CREATE TABLE fan_posts (
+        id TEXT PRIMARY KEY,
+        team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+        profile_id TEXT NOT NULL REFERENCES fan_desk_profiles(id) ON DELETE CASCADE,
+        kind TEXT NOT NULL,
+        status TEXT NOT NULL,
+        post_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        emailed_at TEXT
+      );
+      CREATE INDEX fan_posts_team_created_idx ON fan_posts(team_id, created_at DESC);
+      CREATE TABLE fan_email_outbox (
+        id TEXT PRIMARY KEY,
+        team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+        post_id TEXT NOT NULL REFERENCES fan_posts(id) ON DELETE CASCADE,
+        recipient TEXT NOT NULL,
+        subject TEXT NOT NULL,
+        body TEXT NOT NULL,
+        status TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        error_message TEXT,
+        created_at TEXT NOT NULL,
+        sent_at TEXT
+      );
+      CREATE INDEX fan_email_outbox_team_created_idx ON fan_email_outbox(team_id, created_at DESC);
+    `,
+  },
 ] as const;
 
 export function applyMigrations(database: Database.Database): void {

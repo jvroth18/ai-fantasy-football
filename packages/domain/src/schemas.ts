@@ -340,6 +340,55 @@ export const automationRunV1Schema = z.object({
   finishedAt: isoDateTimeSchema.nullable(),
 });
 
+export const fanVoiceSchema = z.enum(['superfan', 'contrarian', 'analyst', 'commissioner']);
+export const fanCadenceSchema = z.enum(['hourly', 'every_3_hours', 'daily', 'weekly']);
+
+export const fanDeskProfileV1Schema = z.object({
+  schemaVersion: z.literal(1),
+  id: entityIdSchema,
+  teamId: entityIdSchema,
+  name: z.string().min(1).max(80),
+  voice: fanVoiceSchema,
+  heat: z.number().min(0).max(1),
+  rumorTolerance: z.number().min(0).max(1),
+  cadence: fanCadenceSchema,
+  enabled: z.boolean(),
+  emailEnabled: z.boolean(),
+  emailAddress: z.string().email().nullable(),
+  emailSubjectPrefix: z.string().min(1).max(80),
+  createdAt: isoDateTimeSchema,
+  updatedAt: isoDateTimeSchema,
+});
+
+export const fanPostKindSchema = z.enum([
+  'breaking_news',
+  'waiver_wire',
+  'trade_rumor',
+  'power_rankings',
+  'game_thread',
+  'weekly_recap',
+]);
+
+export const fanPostStatusSchema = z.enum(['published', 'emailed']);
+
+export const fanPostV1Schema = z.object({
+  schemaVersion: z.literal(1),
+  id: entityIdSchema,
+  teamId: entityIdSchema,
+  profileId: entityIdSchema,
+  kind: fanPostKindSchema,
+  status: fanPostStatusSchema,
+  headline: z.string().min(1).max(180),
+  dek: z.string().min(1).max(240),
+  body: z.string().min(1).max(12_000),
+  stance: z.string().min(1).max(240),
+  heat: z.number().min(0).max(1),
+  evidence: z.array(sourceEvidenceSchema).min(1),
+  generatedBy: z.enum(['deterministic', 'codex']),
+  createdAt: isoDateTimeSchema,
+  emailedAt: isoDateTimeSchema.nullable(),
+});
+
 export type SourceEvidence = z.infer<typeof sourceEvidenceSchema>;
 export type ScoringRule = z.infer<typeof scoringRuleSchema>;
 export type LeagueRuleSetV1 = z.infer<typeof leagueRuleSetV1Schema>;
@@ -352,3 +401,8 @@ export type RecommendationAction = z.infer<typeof recommendationActionSchema>;
 export type RecommendationV1 = z.infer<typeof recommendationV1Schema>;
 export type ActionIntentV1 = z.infer<typeof actionIntentV1Schema>;
 export type AutomationRunV1 = z.infer<typeof automationRunV1Schema>;
+export type FanVoice = z.infer<typeof fanVoiceSchema>;
+export type FanCadence = z.infer<typeof fanCadenceSchema>;
+export type FanDeskProfileV1 = z.infer<typeof fanDeskProfileV1Schema>;
+export type FanPostKind = z.infer<typeof fanPostKindSchema>;
+export type FanPostV1 = z.infer<typeof fanPostV1Schema>;

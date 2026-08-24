@@ -4,3 +4,4 @@ export * from './migrations.js';
 export * from './repositories.js';
 export * from './schema.js';
 export * from './workflow-repositories.js';
+export * from './fan-desk-repositories.js';
