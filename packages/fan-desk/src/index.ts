@@ -24,7 +24,9 @@ export type FanPortalSnapshot = {
   observedAt: string;
   page: string;
   roster: FanPortalRosterEntry[];
-  availablePlayers: Array<FanPortalRosterEntry & { acquisitionType: string; rosteredPercent: number | null }>;
+  availablePlayers: Array<
+    FanPortalRosterEntry & { acquisitionType: string; rosteredPercent: number | null }
+  >;
   leagueTeams: Array<{ teamId: string; name: string; roster: FanPortalRosterEntry[] }>;
   waiverClaims: Array<{ actionId: string; status: string }>;
   tradeOffers: Array<{ actionId: string; status: string }>;
@@ -94,7 +96,10 @@ function rosterDelta(latest: FanPortalSnapshot | null, previous: FanPortalSnapsh
 
 function selectKind(context: FanDeskContext, added: number, dropped: number): FanPostKind {
   const newestNews = context.news[0];
-  if (newestNews && Date.parse(newestNews.publishedAt) >= context.now.getTime() - 36 * 60 * 60_000) {
+  if (
+    newestNews &&
+    Date.parse(newestNews.publishedAt) >= context.now.getTime() - 36 * 60 * 60_000
+  ) {
     return 'breaking_news';
   }
   if (context.latest?.waiverClaims.length || context.latest?.availablePlayers.length) {
@@ -120,7 +125,8 @@ function voiceLead(voice: FanVoice): string {
 function heatLine(voice: FanVoice, heat: number): string {
   if (voice === 'commissioner') return 'Keep it spicy, keep it inside the lines.';
   if (heat >= 0.75) return 'Someone is going to be extremely normal about this. It will not be me.';
-  if (voice === 'contrarian') return 'The group chat will hate this take. That is how we know it is working.';
+  if (voice === 'contrarian')
+    return 'The group chat will hate this take. That is how we know it is working.';
   return 'No panic. Just receipts.';
 }
 
@@ -135,10 +141,13 @@ export function createFanPostDraft(context: FanDeskContext): FanPostDraft {
   const signal = latest
     ? `ESPN scan ${latest.observedAt}: ${latest.roster.length} rostered players, ${latest.availablePlayers.length} visible free/waiver options, ${latest.leagueTeams.length} league rosters in view.`
     : 'No ESPN scan is available yet; this is a scene-setter, not a claim about live league state.';
-  const newsLine = newestNews ? `The latest headline from ${newestNews.source}: “${newestNews.title}”.` : 'The news cycle is quiet, which usually means the league is about to do something loud.';
-  const movement = delta.added.length || delta.dropped.length
-    ? `Roster movement: added ${addedNames.join(', ') || 'nobody visible'}; dropped ${droppedNames.join(', ') || 'nobody visible'}.`
-    : `The waiver board is flashing ${topAvailable.join(', ') || 'no obvious names'}${topAvailable.length ? ' as the names to watch' : ''}.`;
+  const newsLine = newestNews
+    ? `The latest headline from ${newestNews.source}: “${newestNews.title}”.`
+    : 'The news cycle is quiet, which usually means the league is about to do something loud.';
+  const movement =
+    delta.added.length || delta.dropped.length
+      ? `Roster movement: added ${addedNames.join(', ') || 'nobody visible'}; dropped ${droppedNames.join(', ') || 'nobody visible'}.`
+      : `The waiver board is flashing ${topAvailable.join(', ') || 'no obvious names'}${topAvailable.length ? ' as the names to watch' : ''}.`;
   const headlines: Record<FanPostKind, string> = {
     breaking_news: `${voiceLead(context.profile.voice)}: the league has a news problem`,
     waiver_wire: `Waiver wire temperature check: ${topAvailable[0] ?? 'the board'} is begging for attention`,
@@ -147,36 +156,86 @@ export function createFanPostDraft(context: FanDeskContext): FanPostDraft {
     game_thread: `Game thread: ${context.team.name} is on the clock`,
     weekly_recap: `The weekly league report: heroes, villains, and one avoidable mistake`,
   };
-  const stance = context.profile.voice === 'contrarian'
-    ? `The popular take is wrong: ${topAvailable[0] ?? context.team.name} is the pressure point.`
-    : context.profile.voice === 'analyst'
-      ? `The actionable edge is simple: watch ${topAvailable[0] ?? 'the next verified signal'} before chasing noise.`
-      : `${context.team.name} is not waiting for permission to make this interesting.`;
+  const stance =
+    context.profile.voice === 'contrarian'
+      ? `The popular take is wrong: ${topAvailable[0] ?? context.team.name} is the pressure point.`
+      : context.profile.voice === 'analyst'
+        ? `The actionable edge is simple: watch ${topAvailable[0] ?? 'the next verified signal'} before chasing noise.`
+        : `${context.team.name} is not waiting for permission to make this interesting.`;
   return {
     kind,
     headline: headlines[kind],
     dek: `${heatLine(context.profile.voice, context.profile.heat)} ${newsLine}`,
-    body: [movement, signal, newsLine, heatLine(context.profile.voice, context.profile.heat)].join('\n\n'),
+    body: [movement, signal, newsLine, heatLine(context.profile.voice, context.profile.heat)].join(
+      '\n\n',
+    ),
     stance,
-    heat: Math.min(1, Math.max(0, context.profile.heat + (context.profile.voice === 'contrarian' ? 0.1 : 0))),
+    heat: Math.min(
+      1,
+      Math.max(0, context.profile.heat + (context.profile.voice === 'contrarian' ? 0.1 : 0)),
+    ),
     generatedBy: 'deterministic',
     evidence: [
       ...(latest
-        ? [evidence('espn_scan', 'ESPN Computer Use snapshot', latest.digest, latest.observedAt, signal, latest.page)]
+        ? [
+            evidence(
+              'espn_scan',
+              'ESPN Computer Use snapshot',
+              latest.digest,
+              latest.observedAt,
+              signal,
+              latest.page,
+            ),
+          ]
         : []),
       ...(newestNews
-        ? [evidence('provider', newestNews.source, digest(newestNews.url), newestNews.publishedAt, newestNews.title, newestNews.url)]
+        ? [
+            evidence(
+              'provider',
+              newestNews.source,
+              digest(newestNews.url),
+              newestNews.publishedAt,
+              newestNews.title,
+              newestNews.url,
+            ),
+          ]
         : []),
     ].length
       ? [
           ...(latest
-            ? [evidence('espn_scan', 'ESPN Computer Use snapshot', latest.digest, latest.observedAt, signal, latest.page)]
+            ? [
+                evidence(
+                  'espn_scan',
+                  'ESPN Computer Use snapshot',
+                  latest.digest,
+                  latest.observedAt,
+                  signal,
+                  latest.page,
+                ),
+              ]
             : []),
           ...(newestNews
-            ? [evidence('provider', newestNews.source, digest(newestNews.url), newestNews.publishedAt, newestNews.title, newestNews.url)]
+            ? [
+                evidence(
+                  'provider',
+                  newestNews.source,
+                  digest(newestNews.url),
+                  newestNews.publishedAt,
+                  newestNews.title,
+                  newestNews.url,
+                ),
+              ]
             : []),
         ]
-      : [evidence('manual', 'Fan desk scene-setter', digest(context.team.id), context.now.toISOString(), 'Generated without a current portal or news snapshot')],
+      : [
+          evidence(
+            'manual',
+            'Fan desk scene-setter',
+            digest(context.team.id),
+            context.now.toISOString(),
+            'Generated without a current portal or news snapshot',
+          ),
+        ],
   };
 }
 
@@ -185,7 +244,9 @@ export async function createFanPost(
   writer?: FanVoiceWriter,
 ): Promise<FanPostV1> {
   const seed = createFanPostDraft(context);
-  const written = writer ? await writer({ profile: context.profile, team: context.team, seed, context }) : null;
+  const written = writer
+    ? await writer({ profile: context.profile, team: context.team, seed, context })
+    : null;
   const finalDraft = written ? { ...seed, ...written, generatedBy: 'codex' as const } : seed;
   return {
     schemaVersion: 1,
