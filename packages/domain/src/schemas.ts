@@ -400,6 +400,7 @@ export const fanEventTypeSchema = z.enum([
   'fan.mention.received',
   'fan.reply.drafted',
   'fan.reply.approved',
+  'fan.reply.published',
   'digest.due',
 ]);
 

@@ -37,6 +37,12 @@ export type FanEmailSender = (message: FanEmailMessage) => Promise<{
 export type FanDeskServiceOptions = {
   writer?: FanVoiceWriter;
   syncPortal?: (team: TeamConfigV1) => Promise<unknown>;
+  networkDispatch?: (input: {
+    team: TeamConfigV1;
+    type: 'fan.post.drafted';
+    payload: Record<string, unknown>;
+    evidence: FanPostV1['evidence'];
+  }) => Promise<unknown>;
   email?: FanEmailSender;
   now?: () => Date;
 };
@@ -99,6 +105,7 @@ export class FanDeskService {
   readonly #news: NewsRepository;
   readonly #writer: FanVoiceWriter | undefined;
   readonly #syncPortal: ((team: TeamConfigV1) => Promise<unknown>) | undefined;
+  readonly #networkDispatch: FanDeskServiceOptions['networkDispatch'];
   readonly #email: FanEmailSender | undefined;
   readonly #now: () => Date;
 
@@ -111,6 +118,7 @@ export class FanDeskService {
     this.#news = new NewsRepository(database);
     this.#writer = options.writer;
     this.#syncPortal = options.syncPortal;
+    this.#networkDispatch = options.networkDispatch;
     this.#email = options.email;
     this.#now = options.now ?? (() => new Date());
   }
@@ -172,6 +180,28 @@ export class FanDeskService {
     };
     let post = await createFanPost(context, this.#writer);
     this.#repository.savePost(post);
+    if (this.#networkDispatch) {
+      try {
+        await this.#networkDispatch({
+          team,
+          type: 'fan.post.drafted',
+          payload: {
+            postId: post.id,
+            headline: post.headline,
+            body: post.body,
+            stance: post.stance,
+          },
+          evidence: post.evidence,
+        });
+      } catch (error) {
+        syncWarning = [
+          syncWarning,
+          `network warning: ${error instanceof Error ? error.message : String(error)}`,
+        ]
+          .filter(Boolean)
+          .join('; ');
+      }
+    }
     let email: StoredFanEmail | null = null;
     if (profile.emailEnabled && profile.emailAddress) {
       email = this.#repository.queueEmail({

@@ -24,6 +24,7 @@ import type { CodexRuleExtractor } from './rule-import-service.js';
 import { EspnSnapshotService } from './espn-snapshot-service.js';
 import { TeamDecisionOrchestrator } from './team-decision-orchestrator.js';
 import { FanDeskService, resendEmailSender } from './fan-desk-service.js';
+import { FanNetworkService } from './fan-network-service.js';
 import type { FanVoiceWriter } from '@ai-ff/fan-desk';
 
 const host = process.env.AI_FF_HOST ?? '127.0.0.1';
@@ -127,9 +128,11 @@ const fanVoiceWriter: FanVoiceWriter = async ({ profile, team, seed, context }) 
     timeoutMs: 120_000,
   });
 };
+const fanNetwork = new FanNetworkService(database.db);
 const fanDesk = new FanDeskService(database.db, {
   writer: fanVoiceWriter,
   syncPortal: syncEspnSnapshot,
+  networkDispatch: async (input) => await fanNetwork.dispatch(input),
   email: resendEmailSender(),
 });
 const management = new ManagementJobs(database.db, {
@@ -170,6 +173,7 @@ const app = await buildServer({
   espnSnapshots,
   espnActions,
   fanDesk,
+  fanNetwork,
   codexReadiness: async () => await codex.readiness(workspaceRoot),
 });
 await app.listen({ host, port });

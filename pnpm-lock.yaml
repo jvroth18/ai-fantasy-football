@@ -65,6 +65,9 @@ importers:
       '@ai-ff/fan-desk':
         specifier: workspace:*
         version: link:../../packages/fan-desk
+      '@ai-ff/fan-network':
+        specifier: workspace:*
+        version: link:../../packages/fan-network
       '@ai-ff/rules':
         specifier: workspace:*
         version: link:../../packages/rules

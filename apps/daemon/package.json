@@ -17,6 +17,7 @@
     "@ai-ff/domain": "workspace:*",
     "@ai-ff/espn": "workspace:*",
     "@ai-ff/fan-desk": "workspace:*",
+    "@ai-ff/fan-network": "workspace:*",
     "@ai-ff/rules": "workspace:*",
     "@ai-ff/scheduler": "workspace:*",
     "@ai-ff/workflows": "workspace:*",

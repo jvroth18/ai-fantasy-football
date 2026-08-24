@@ -1,15 +1,19 @@
 import { randomUUID } from 'node:crypto';
 
+import { FanNetworkService } from './fan-network-service.js';
 import type { LeagueRuleSetV1, TeamConfigV1 } from '@ai-ff/domain';
+import { openDatabase } from '@ai-ff/db';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { buildServer } from './app.js';
 
 const now = '2026-08-23T18:00:00.000Z';
 const servers: Awaited<ReturnType<typeof buildServer>>[] = [];
+const databases: ReturnType<typeof openDatabase>[] = [];
 
 afterEach(async () => {
   await Promise.all(servers.splice(0).map((server) => server.close()));
+  databases.splice(0).forEach((database) => database.close());
 });
 
 async function server(options: Parameters<typeof buildServer>[0] = {}) {
@@ -295,6 +299,83 @@ describe('local daemon API', () => {
     });
     expect(generated.statusCode).toBe(200);
     expect(generated.json()).toMatchObject({ post: { teamId: team.id } });
+  });
+
+  it('configures a team-scoped agent network and records an interactive event trace', async () => {
+    const database = openDatabase(':memory:');
+    databases.push(database);
+    const app = await server({
+      database,
+      fanNetwork: new FanNetworkService(database.db, { now: () => new Date(now) }),
+    });
+    const team = await createTeam(app);
+
+    const configured = await app.inject({
+      method: 'PUT',
+      url: `/api/teams/${team.id}/fan-network`,
+      payload: {
+        name: 'Sunday Night Network',
+        enabled: true,
+        agents: [
+          {
+            id: 'scout',
+            name: 'Scout',
+            role: 'observer',
+            instructions: 'Watch the league.',
+            model: {
+              provider: 'none',
+              modelId: 'deterministic',
+              temperature: 0,
+              maxOutputTokens: 200,
+            },
+            listensTo: ['fan.mention.received'],
+            emits: ['league.signal.detected'],
+            enabled: true,
+            heat: 0.2,
+            toolPermissions: { readPortal: true, readNews: true, publish: false, reply: false },
+          },
+        ],
+        routes: [{ event: 'fan.mention.received', to: ['scout'], parallel: false }],
+        policies: {
+          requireEvidence: true,
+          identifyAsAi: true,
+          maxRepliesPerHour: 10,
+          maxModelSpendPerDay: 1,
+          maxTurnsPerEvent: 4,
+          neverInventInjuries: true,
+          neverAcceptTrades: true,
+        },
+      },
+    });
+    expect(configured.statusCode).toBe(200);
+    expect(configured.json()).toMatchObject({
+      name: 'Sunday Night Network',
+      teamId: team.id,
+      agents: [{ id: 'scout' }],
+    });
+
+    const emitted = await app.inject({
+      method: 'POST',
+      url: `/api/teams/${team.id}/fan-network/events`,
+      payload: {
+        type: 'fan.mention.received',
+        payload: { text: 'Trade deadline chaos!' },
+      },
+    });
+    expect(emitted.statusCode).toBe(200);
+    expect(emitted.json()).toMatchObject({
+      rootEvent: { type: 'fan.mention.received', teamId: team.id },
+      events: [{ type: 'fan.mention.received' }, { type: 'league.signal.detected' }],
+      runs: [{ agentId: 'scout', status: 'completed' }],
+    });
+
+    const detail = await app.inject({ method: 'GET', url: `/api/teams/${team.id}` });
+    expect(detail.json()).toMatchObject({
+      fanNetwork: {
+        network: { name: 'Sunday Night Network' },
+        events: [{ type: 'fan.mention.received' }, { type: 'league.signal.detected' }],
+      },
+    });
   });
 
   it('exposes explicit read-only ESPN sync without enabling mutations', async () => {

@@ -16,7 +16,12 @@ import {
 } from '@ai-ff/db';
 import {
   automationPolicySchema,
+  fanEventTypeSchema,
+  fanAgentSchema,
   fanDeskProfileV1Schema,
+  fanNetworkPolicySchema,
+  fanNetworkRouteSchema,
+  sourceEvidenceSchema,
   strategyProfileV1Schema,
   type TeamConfigV1,
 } from '@ai-ff/domain';
@@ -29,6 +34,7 @@ import { RuleImportService, type CodexRuleExtractor } from './rule-import-servic
 import { portalSnapshotView, type EspnSnapshotService } from './espn-snapshot-service.js';
 import type { EspnActionService } from './espn-action-service.js';
 import type { FanDeskService } from './fan-desk-service.js';
+import type { FanNetworkService } from './fan-network-service.js';
 
 const teamParamsSchema = z.object({ teamId: z.string().uuid() });
 const ruleParamsSchema = teamParamsSchema.extend({ ruleSetId: z.string().uuid() });
@@ -100,6 +106,19 @@ const fanDeskInputSchema = fanDeskProfileV1Schema.omit({
   createdAt: true,
   updatedAt: true,
 });
+const fanNetworkInputSchema = z.object({
+  name: z.string().min(1).max(120),
+  enabled: z.boolean(),
+  agents: z.array(fanAgentSchema).min(1).max(32),
+  routes: z.array(fanNetworkRouteSchema).min(1).max(64),
+  policies: fanNetworkPolicySchema,
+});
+const fanNetworkEventInputSchema = z.object({
+  type: fanEventTypeSchema,
+  payload: z.record(z.string(), z.unknown()).default({}),
+  evidence: z.array(sourceEvidenceSchema).default([]),
+  correlationId: z.string().uuid().optional(),
+});
 
 export type ServerOptions = {
   logger?: boolean;
@@ -112,6 +131,10 @@ export type ServerOptions = {
   fanDesk?: Pick<
     FanDeskService,
     'profile' | 'saveProfile' | 'posts' | 'emails' | 'generate' | 'runScheduled'
+  > | null;
+  fanNetwork?: Pick<
+    FanNetworkService,
+    'network' | 'saveNetwork' | 'events' | 'runs' | 'dispatch'
   > | null;
   codexReadiness?: (() => Promise<CodexReadiness>) | null;
   now?: () => Date;
@@ -370,6 +393,13 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
             emails: options.fanDesk.emails(teamId),
           }
         : null,
+      fanNetwork: options.fanNetwork
+        ? {
+            network: options.fanNetwork.network(team),
+            events: options.fanNetwork.events(teamId),
+            runs: options.fanNetwork.runs(teamId),
+          }
+        : null,
     };
   });
 
@@ -399,6 +429,43 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
     if (!team) return await reply.code(404).send({ error: 'NOT_FOUND' });
     if (!options.fanDesk) return await reply.code(503).send({ error: 'FAN_DESK_UNAVAILABLE' });
     return await options.fanDesk.generate(team);
+  });
+
+  app.get('/api/teams/:teamId/fan-network', async (request, reply) => {
+    const { teamId } = teamParamsSchema.parse(request.params);
+    const team = teams.getById(teamId);
+    if (!team) return await reply.code(404).send({ error: 'NOT_FOUND' });
+    if (!options.fanNetwork)
+      return await reply.code(503).send({ error: 'FAN_NETWORK_UNAVAILABLE' });
+    return {
+      network: options.fanNetwork.network(team),
+      events: options.fanNetwork.events(teamId),
+      runs: options.fanNetwork.runs(teamId),
+    };
+  });
+
+  app.put('/api/teams/:teamId/fan-network', async (request, reply) => {
+    const { teamId } = teamParamsSchema.parse(request.params);
+    const team = teams.getById(teamId);
+    if (!team) return await reply.code(404).send({ error: 'NOT_FOUND' });
+    if (!options.fanNetwork)
+      return await reply.code(503).send({ error: 'FAN_NETWORK_UNAVAILABLE' });
+    return options.fanNetwork.saveNetwork(team, fanNetworkInputSchema.parse(request.body));
+  });
+
+  app.post('/api/teams/:teamId/fan-network/events', async (request, reply) => {
+    const { teamId } = teamParamsSchema.parse(request.params);
+    const team = teams.getById(teamId);
+    if (!team) return await reply.code(404).send({ error: 'NOT_FOUND' });
+    if (!options.fanNetwork)
+      return await reply.code(503).send({ error: 'FAN_NETWORK_UNAVAILABLE' });
+    const input = fanNetworkEventInputSchema.parse(request.body);
+    const { correlationId, ...eventInput } = input;
+    return await options.fanNetwork.dispatch({
+      team,
+      ...eventInput,
+      ...(correlationId ? { correlationId } : {}),
+    });
   });
 
   app.patch('/api/teams/:teamId', async (request, reply) => {
