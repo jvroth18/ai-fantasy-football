@@ -43,6 +43,8 @@ The football decision layer ranks draft picks, optimizes legal lineups, pairs ad
 
 The local scheduler runs team-specific refresh and management jobs in each league's configured timezone, prevents overlaps with durable leases, and performs one bounded catch-up after downtime. See [docs/SCHEDULING.md](docs/SCHEDULING.md).
 
+The Fan Desk turns read-only ESPN Computer Use snapshots and attributed news into an evidence-backed stream of superfan, analyst, commissioner, or contrarian bulletins. It runs on its own cadence, keeps a local archive, and can send each team an email digest through Resend when `AI_FF_RESEND_API_KEY` and `AI_FF_EMAIL_FROM` are configured. Without those variables, email intent is retained as `pending_configuration` rather than silently discarded. See [docs/FAN_DESK.md](docs/FAN_DESK.md).
+
 Team onboarding, rule upload/review, strategy configuration, automation arming, manual management runs, and approved recommendation execution are exposed through the loopback-only daemon API. Uploaded binary rule files are held only long enough for a read-only Codex extraction turn and then removed. See [docs/LOCAL_DAEMON.md](docs/LOCAL_DAEMON.md).
 
 The player-intelligence directory compiles three-season performance, opportunity, roster-market momentum, and attributed news attention into transparent independent rankings. Reviews are searchable in the web app and exportable as a versioned JSON/JSONL handoff for another AI agent. See [docs/PLAYER_INTELLIGENCE.md](docs/PLAYER_INTELLIGENCE.md).

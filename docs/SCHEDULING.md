@@ -10,6 +10,7 @@ The daemon uses [Croner](https://github.com/Hexagon/croner) with IANA timezones 
 | Waiver plan   | Tuesday 18:00                             | Prepare claims before common processing windows                |
 | Trade market  | Wednesday 12:00                           | Search for fair outgoing proposals                             |
 | Lineup watch  | Every 30 minutes, 08:00–20:59 Sun/Mon/Thu | Recheck news near common NFL game windows                      |
+| Fan desk      | Every 3 hours                             | Review observed league activity and publish a fan bulletin     |
 
 Schedules are evaluated independently in each team's timezone and follow daylight-saving changes. On startup, overdue jobs receive one catch-up run; high-frequency lineup checks do not. Handler errors are bounded and recorded instead of crashing the scheduler, and there are no automatic retry loops.
 
