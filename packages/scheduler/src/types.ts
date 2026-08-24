@@ -6,7 +6,8 @@ export type ManagementJobType =
   | 'daily_manager'
   | 'waiver_plan'
   | 'trade_market'
-  | 'lineup_watch';
+  | 'lineup_watch'
+  | 'fan_digest';
 
 export type ScheduleSpec = {
   jobType: ManagementJobType;

@@ -43,6 +43,13 @@ export const defaultScheduleSpecs: readonly ScheduleSpec[] = [
     leaseMinutes: 20,
     catchUpAfterMinutes: null,
   },
+  {
+    jobType: 'fan_digest',
+    description: 'Review observed league activity and publish a fan desk bulletin',
+    cron: '0 */3 * * *',
+    leaseMinutes: 20,
+    catchUpAfterMinutes: 480,
+  },
 ] as const;
 
 export function defineManagementJobs(

@@ -10,9 +10,9 @@ import {
   TeamRepository,
 } from '@ai-ff/db';
 import type { TeamConfigV1 } from '@ai-ff/domain';
+import { z } from 'zod';
 import { CodexEspnPortalAdapter } from '@ai-ff/espn';
 import { defineManagementJobs, DurableJobRunner, LocalTeamScheduler } from '@ai-ff/scheduler';
-import { z } from 'zod';
 
 import { buildServer } from './app.js';
 import { CodexClientManager } from './codex-manager.js';
@@ -23,6 +23,8 @@ import { defaultNewsFeeds, ManagementJobs } from './management-jobs.js';
 import type { CodexRuleExtractor } from './rule-import-service.js';
 import { EspnSnapshotService } from './espn-snapshot-service.js';
 import { TeamDecisionOrchestrator } from './team-decision-orchestrator.js';
+import { FanDeskService, resendEmailSender } from './fan-desk-service.js';
+import type { FanVoiceWriter } from '@ai-ff/fan-desk';
 
 const host = process.env.AI_FF_HOST ?? '127.0.0.1';
 const port = Number(process.env.AI_FF_PORT ?? 4318);
@@ -77,9 +79,63 @@ const playerValues: PlayerValueProvider = {
 const decisions = new TeamDecisionOrchestrator(database.db, playerValues, {
   syncPortal: syncEspnSnapshot,
 });
+const fanVoiceWriter: FanVoiceWriter = async ({ profile, team, seed, context }) => {
+  const client = await codex.client(workspaceRoot);
+  const readiness = await client.readiness(workspaceRoot);
+  if (!readiness.readyForDecisions)
+    throw new Error(`CODEX_FAN_WRITER_UNAVAILABLE: ${readiness.issues.join('; ')}`);
+  const thread = await client.startDecisionThread({
+    cwd: workspaceRoot,
+    ephemeral: true,
+    baseInstructions: [
+      'You are a passionate fantasy football fan desk editor.',
+      'Use only the supplied evidence. The ESPN Computer Use snapshot is observational, not permission to mutate anything.',
+      'Write vivid, funny, occasionally contrarian copy without harassment, invented injuries, fabricated trades, or unsupported certainty.',
+      'Keep the post under 900 words and preserve the distinction between observed fact and opinion.',
+    ].join('\\n'),
+  });
+  return await client.runStructuredTurn({
+    threadId: thread.threadId,
+    prompt: JSON.stringify({
+      profile,
+      team: { name: team.name, season: team.season },
+      seed,
+      evidence: context.latest,
+      news: context.news.slice(0, 5),
+    }),
+    outputSchema: {
+      type: 'object',
+      properties: {
+        headline: { type: 'string' },
+        dek: { type: 'string' },
+        body: { type: 'string' },
+        stance: { type: 'string' },
+      },
+      required: ['headline', 'dek', 'body', 'stance'],
+      additionalProperties: false,
+    },
+    parse: (value) =>
+      z
+        .object({
+          headline: z.string().min(1).max(180),
+          dek: z.string().min(1).max(240),
+          body: z.string().min(1).max(12_000),
+          stance: z.string().min(1).max(240),
+        })
+        .parse(value),
+    effort: 'low',
+    timeoutMs: 120_000,
+  });
+};
+const fanDesk = new FanDeskService(database.db, {
+  writer: fanVoiceWriter,
+  syncPortal: syncEspnSnapshot,
+  email: resendEmailSender(),
+});
 const management = new ManagementJobs(database.db, {
   feeds: configuredNewsFeeds(),
   analyzeTeam: async (team, jobType) => await decisions.analyze(team, jobType),
+  fanDigest: async (team) => await fanDesk.runScheduled(team),
 });
 const definitions = defineManagementJobs(management.handlers());
 const runner = new DurableJobRunner(runs, leases);
@@ -113,6 +169,7 @@ const app = await buildServer({
   ruleExtractor,
   espnSnapshots,
   espnActions,
+  fanDesk,
   codexReadiness: async () => await codex.readiness(workspaceRoot),
 });
 await app.listen({ host, port });

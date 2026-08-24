@@ -14,7 +14,12 @@ import {
   TeamRepository,
   type DatabaseHandle,
 } from '@ai-ff/db';
-import { automationPolicySchema, strategyProfileV1Schema, type TeamConfigV1 } from '@ai-ff/domain';
+import {
+  automationPolicySchema,
+  fanDeskProfileV1Schema,
+  strategyProfileV1Schema,
+  type TeamConfigV1,
+} from '@ai-ff/domain';
 import { supportedRuleMimeTypes, type RuleSource } from '@ai-ff/rules';
 import type { LocalTeamScheduler, ManagementJobType } from '@ai-ff/scheduler';
 import Fastify, { type FastifyInstance } from 'fastify';
@@ -23,6 +28,7 @@ import { z, ZodError } from 'zod';
 import { RuleImportService, type CodexRuleExtractor } from './rule-import-service.js';
 import { portalSnapshotView, type EspnSnapshotService } from './espn-snapshot-service.js';
 import type { EspnActionService } from './espn-action-service.js';
+import type { FanDeskService } from './fan-desk-service.js';
 
 const teamParamsSchema = z.object({ teamId: z.string().uuid() });
 const ruleParamsSchema = teamParamsSchema.extend({ ruleSetId: z.string().uuid() });
@@ -34,6 +40,7 @@ const jobParamsSchema = teamParamsSchema.extend({
     'waiver_plan',
     'trade_market',
     'lineup_watch',
+    'fan_digest',
   ]),
 });
 const recommendationParamsSchema = teamParamsSchema.extend({
@@ -86,6 +93,13 @@ const playerListQuerySchema = z.object({
 });
 const playerParamsSchema = z.object({ playerId: z.string().uuid() });
 const playerExportQuerySchema = z.object({ format: z.enum(['json', 'jsonl']).default('json') });
+const fanDeskInputSchema = fanDeskProfileV1Schema.omit({
+  schemaVersion: true,
+  id: true,
+  teamId: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
 export type ServerOptions = {
   logger?: boolean;
@@ -95,6 +109,10 @@ export type ServerOptions = {
   ruleExtractor?: CodexRuleExtractor | null;
   espnSnapshots?: Pick<EspnSnapshotService, 'sync'> | null;
   espnActions?: Pick<EspnActionService, 'executeRecommendation'> | null;
+  fanDesk?: Pick<
+    FanDeskService,
+    'profile' | 'saveProfile' | 'posts' | 'emails' | 'generate' | 'runScheduled'
+  > | null;
   codexReadiness?: (() => Promise<CodexReadiness>) | null;
   now?: () => Date;
 };
@@ -198,6 +216,10 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
     }
     if (message === 'ESPN_OBSERVATION_TIME_INVALID') {
       void reply.code(422).send({ error: message });
+      return;
+    }
+    if (message === 'FAN_DESK_DISABLED') {
+      void reply.code(409).send({ error: message });
       return;
     }
     if (
@@ -341,7 +363,42 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
       espnSnapshot: latestPortalSnapshot ? portalSnapshotView(latestPortalSnapshot) : null,
       recommendations: recommendations.listActive(teamId, now().toISOString()),
       runs: runs.listRecent(teamId),
+      fanDesk: options.fanDesk
+        ? {
+            profile: options.fanDesk.profile(team),
+            posts: options.fanDesk.posts(teamId),
+            emails: options.fanDesk.emails(teamId),
+          }
+        : null,
     };
+  });
+
+  app.get('/api/teams/:teamId/fan-desk', async (request, reply) => {
+    const { teamId } = teamParamsSchema.parse(request.params);
+    const team = teams.getById(teamId);
+    if (!team) return await reply.code(404).send({ error: 'NOT_FOUND' });
+    if (!options.fanDesk) return await reply.code(503).send({ error: 'FAN_DESK_UNAVAILABLE' });
+    return {
+      profile: options.fanDesk.profile(team),
+      posts: options.fanDesk.posts(teamId),
+      emails: options.fanDesk.emails(teamId),
+    };
+  });
+
+  app.put('/api/teams/:teamId/fan-desk', async (request, reply) => {
+    const { teamId } = teamParamsSchema.parse(request.params);
+    const team = teams.getById(teamId);
+    if (!team) return await reply.code(404).send({ error: 'NOT_FOUND' });
+    if (!options.fanDesk) return await reply.code(503).send({ error: 'FAN_DESK_UNAVAILABLE' });
+    return options.fanDesk.saveProfile(team, fanDeskInputSchema.parse(request.body));
+  });
+
+  app.post('/api/teams/:teamId/fan-desk/generate', async (request, reply) => {
+    const { teamId } = teamParamsSchema.parse(request.params);
+    const team = teams.getById(teamId);
+    if (!team) return await reply.code(404).send({ error: 'NOT_FOUND' });
+    if (!options.fanDesk) return await reply.code(503).send({ error: 'FAN_DESK_UNAVAILABLE' });
+    return await options.fanDesk.generate(team);
   });
 
   app.patch('/api/teams/:teamId', async (request, reply) => {

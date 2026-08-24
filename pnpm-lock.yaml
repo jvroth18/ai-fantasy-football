@@ -62,6 +62,9 @@ importers:
       '@ai-ff/espn':
         specifier: workspace:*
         version: link:../../packages/espn
+      '@ai-ff/fan-desk':
+        specifier: workspace:*
+        version: link:../../packages/fan-desk
       '@ai-ff/rules':
         specifier: workspace:*
         version: link:../../packages/rules

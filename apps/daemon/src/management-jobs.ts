@@ -39,6 +39,7 @@ export type ManagementJobOptions = {
   news?: NewsSource;
   feeds?: NewsFeed[];
   analyzeTeam?: TeamAnalysis;
+  fanDigest?: (team: TeamConfigV1) => Promise<JobHandlerResult>;
   now?: () => Date;
 };
 
@@ -64,6 +65,7 @@ export class ManagementJobs {
   readonly #news: NewsSource;
   readonly #feeds: NewsFeed[];
   readonly #analyzeTeam: TeamAnalysis | null;
+  readonly #fanDigest: ((team: TeamConfigV1) => Promise<JobHandlerResult>) | null;
   readonly #now: () => Date;
 
   constructor(database: AppDatabase, options: ManagementJobOptions = {}) {
@@ -78,6 +80,7 @@ export class ManagementJobs {
     this.#news = options.news ?? new RssNewsProvider();
     this.#feeds = options.feeds ?? defaultNewsFeeds;
     this.#analyzeTeam = options.analyzeTeam ?? null;
+    this.#fanDigest = options.fanDigest ?? null;
     this.#now = options.now ?? (() => new Date());
   }
 
@@ -89,6 +92,14 @@ export class ManagementJobs {
       waiver_plan: async ({ team }) => await this.analyze(team, 'waiver_plan'),
       trade_market: async ({ team }) => await this.analyze(team, 'trade_market'),
       lineup_watch: async ({ team }) => await this.analyze(team, 'lineup_watch'),
+      fan_digest: async ({ team }) =>
+        this.#fanDigest
+          ? await this.#fanDigest(team)
+          : {
+              status: 'needs_attention',
+              errorCode: 'FAN_DESK_UNAVAILABLE',
+              message: 'Fan desk is not configured',
+            },
     };
   }
 
