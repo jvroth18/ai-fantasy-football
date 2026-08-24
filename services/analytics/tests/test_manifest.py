@@ -11,4 +11,6 @@ def test_seed_manifest_expands_required_history_through_current_season() -> None
 
     assert stats.seasons[0] == 2012
     assert stats.seasons[-1] == 2026
+    assert stats.asset_pattern == r"player_stats_{season}\.parquet"
+    assert stats.publication_lag_seasons == 2
     assert players.seasons == ()

@@ -1,14 +1,73 @@
 {
   "schemaVersion": 1,
   "datasets": [
-    { "provider": "nflverse", "name": "players", "seasonStart": null, "format": "parquet" },
-    { "provider": "nflverse", "name": "schedules", "seasonStart": null, "format": "parquet" },
-    { "provider": "nflverse", "name": "combine", "seasonStart": null, "format": "parquet" },
-    { "provider": "nflverse", "name": "draft_picks", "seasonStart": null, "format": "parquet" },
-    { "provider": "nflverse", "name": "player_stats", "seasonStart": 2012, "format": "parquet" },
-    { "provider": "nflverse", "name": "rosters", "seasonStart": 2015, "format": "parquet" },
-    { "provider": "nflverse", "name": "injuries", "seasonStart": 2009, "format": "parquet" },
-    { "provider": "nflverse", "name": "depth_charts", "seasonStart": 2015, "format": "parquet" },
-    { "provider": "nflverse", "name": "snap_counts", "seasonStart": 2012, "format": "parquet" }
+    {
+      "provider": "nflverse",
+      "name": "players",
+      "seasonStart": null,
+      "format": "parquet",
+      "assetPattern": "players\\.parquet"
+    },
+    {
+      "provider": "nflverse",
+      "name": "schedules",
+      "seasonStart": null,
+      "format": "parquet",
+      "assetPattern": "games\\.parquet"
+    },
+    {
+      "provider": "nflverse",
+      "name": "combine",
+      "seasonStart": null,
+      "format": "parquet",
+      "assetPattern": "combine\\.parquet"
+    },
+    {
+      "provider": "nflverse",
+      "name": "draft_picks",
+      "seasonStart": null,
+      "format": "parquet",
+      "assetPattern": "draft_picks\\.parquet"
+    },
+    {
+      "provider": "nflverse",
+      "name": "player_stats",
+      "seasonStart": 2012,
+      "format": "parquet",
+      "assetPattern": "player_stats_{season}\\.parquet",
+      "publicationLagSeasons": 2
+    },
+    {
+      "provider": "nflverse",
+      "name": "rosters",
+      "seasonStart": 2015,
+      "format": "parquet",
+      "assetPattern": "roster_{season}\\.parquet",
+      "publicationLagSeasons": 1
+    },
+    {
+      "provider": "nflverse",
+      "name": "injuries",
+      "seasonStart": 2009,
+      "format": "parquet",
+      "assetPattern": "injuries_{season}\\.parquet",
+      "publicationLagSeasons": 1
+    },
+    {
+      "provider": "nflverse",
+      "name": "depth_charts",
+      "seasonStart": 2015,
+      "format": "parquet",
+      "assetPattern": "depth_charts_{season}\\.parquet",
+      "publicationLagSeasons": 1
+    },
+    {
+      "provider": "nflverse",
+      "name": "snap_counts",
+      "seasonStart": 2012,
+      "format": "parquet",
+      "assetPattern": "snap_counts_{season}\\.parquet",
+      "publicationLagSeasons": 1
+    }
   ]
 }

@@ -13,6 +13,8 @@ class DatasetRequest:
     name: str
     seasons: tuple[int, ...]
     format: str
+    asset_pattern: str
+    publication_lag_seasons: int
 
 
 def load_seed_manifest(path: Path, current_season: int) -> list[DatasetRequest]:
@@ -30,6 +32,8 @@ def load_seed_manifest(path: Path, current_season: int) -> list[DatasetRequest]:
                 name=str(item["name"]),
                 seasons=seasons,
                 format=str(item["format"]),
+                asset_pattern=str(item["assetPattern"]),
+                publication_lag_seasons=int(item.get("publicationLagSeasons", 0)),
             )
         )
     return requests

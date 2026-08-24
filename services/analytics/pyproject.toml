@@ -11,6 +11,9 @@ dependencies = [
   "scikit-learn>=1.7.0",
 ]
 
+[project.scripts]
+ai-ff-analytics = "ai_fantasy_football_analytics.cli:main"
+
 [dependency-groups]
 dev = ["pytest>=8.3", "ruff>=0.12.0"]
 

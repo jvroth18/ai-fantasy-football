@@ -10,4 +10,6 @@ The baseline is designed to operate without paid sports-data subscriptions.
 
 Downloaded raw data belongs in `data/raw` or `data/cache`, both of which are ignored by Git.
 
+`pnpm data:seed --season <year>` resolves exact nflverse release assets from the versioned manifest, downloads with atomic replacement, and records byte counts, source update times, and SHA-256 checksums in a local seed lock. A dry run reports the full plan and expected download size without writing files.
+
 The versioned seed manifest keeps NFL player statistics and snap counts from 2012 forward, rosters and depth charts from 2015 forward, injuries from 2009 forward, and complete player/schedule/combine/draft reference tables. This is the reproducible modeling window, not a redistribution of upstream data.

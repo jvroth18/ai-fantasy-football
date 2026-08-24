@@ -18,6 +18,7 @@
     "test": "pnpm -r --if-present test && pnpm test:analytics",
     "test:analytics": "cd services/analytics && uv run pytest",
     "codex:check": "pnpm --filter @ai-ff/codex build && pnpm --filter @ai-ff/codex check:local",
+    "data:seed": "cd services/analytics && uv run ai-ff-analytics seed",
     "ci": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "devDependencies": {

@@ -23,6 +23,15 @@ pnpm codex:check
 pnpm dev
 ```
 
+Preview or materialize the reproducible free-data seed separately:
+
+```bash
+pnpm data:seed --season 2026 --dry-run
+pnpm data:seed --season 2026
+```
+
+The second command downloads the available nflverse Parquet window into ignored local cache storage. It uses exact asset-name patterns, atomic file replacement, SHA-256 verification, and `data/cache/nflverse/seed-lock.json` for resumable reuse. Current-season datasets that nflverse has not published yet are recorded as optional missing assets instead of being silently invented.
+
 The web interface runs at `http://127.0.0.1:4317`; the local daemon runs at `http://127.0.0.1:4318`.
 Codex authentication stays in the CLI; the readiness check reports only an account type and capability counts. See [docs/CODEX_INTEGRATION.md](docs/CODEX_INTEGRATION.md).
 
