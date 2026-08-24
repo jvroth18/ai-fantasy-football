@@ -50,6 +50,11 @@ export class EspnSnapshotService {
     const snapshot = espnPortalSnapshotSchema.parse(
       await this.adapter.observe({ leagueId: team.espnLeagueId, teamId: team.espnTeamId }),
     );
+    return this.record(team, snapshot);
+  }
+
+  record(team: TeamConfigV1, input: EspnPortalSnapshot): PortalSnapshotView {
+    const snapshot = espnPortalSnapshotSchema.parse(input);
     if (!snapshot.signedIn) throw new Error('ESPN_AUTH_REQUIRED');
     if (snapshot.leagueId !== team.espnLeagueId || snapshot.teamId !== team.espnTeamId) {
       throw new Error('ESPN_BINDING_MISMATCH');

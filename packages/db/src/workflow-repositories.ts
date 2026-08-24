@@ -132,6 +132,21 @@ export class RecommendationRepository {
       .map((row) => recommendationV1Schema.parse(JSON.parse(row.recommendationJson)));
   }
 
+  getActiveForTeam(teamId: string, recommendationId: string, now: string): RecommendationV1 | null {
+    const row = this.db
+      .select()
+      .from(recommendations)
+      .where(
+        and(
+          eq(recommendations.teamId, teamId),
+          eq(recommendations.id, recommendationId),
+          gt(recommendations.expiresAt, now),
+        ),
+      )
+      .get();
+    return row ? recommendationV1Schema.parse(JSON.parse(row.recommendationJson)) : null;
+  }
+
   replaceActiveForTypes(
     teamId: string,
     types: RecommendationV1['type'][],
@@ -245,6 +260,26 @@ export class ActionIntentRepository {
       )
       .get();
     return row ? actionIntentV1Schema.parse(JSON.parse(row.actionJson)) : null;
+  }
+
+  getForTeam(teamId: string, intentId: string): ActionIntentV1 | null {
+    const row = this.db
+      .select()
+      .from(actionIntents)
+      .where(and(eq(actionIntents.teamId, teamId), eq(actionIntents.id, intentId)))
+      .get();
+    return row ? actionIntentV1Schema.parse(JSON.parse(row.actionJson)) : null;
+  }
+
+  listForTeam(teamId: string, limit = 50): ActionIntentV1[] {
+    return this.db
+      .select()
+      .from(actionIntents)
+      .where(eq(actionIntents.teamId, teamId))
+      .orderBy(desc(actionIntents.createdAt))
+      .limit(limit)
+      .all()
+      .map((row) => actionIntentV1Schema.parse(JSON.parse(row.actionJson)));
   }
 }
 

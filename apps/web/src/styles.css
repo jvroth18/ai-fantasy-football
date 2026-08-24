@@ -1033,6 +1033,34 @@ b {
   line-height: 1.45;
 }
 
+.recommendation-action {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 9px;
+  padding: 6px 9px;
+  border: 1px solid color-mix(in srgb, var(--team-accent) 25%, var(--line));
+  border-radius: 6px;
+  color: var(--team-accent);
+  background: color-mix(in srgb, var(--team-accent) 6%, transparent);
+  font-family: ui-monospace, monospace;
+  font-size: 8px;
+  text-transform: uppercase;
+}
+
+.recommendation-action:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--team-accent) 12%, transparent);
+}
+
+.advisory-label {
+  display: block;
+  margin-top: 8px;
+  color: #56685e;
+  font-family: ui-monospace, monospace;
+  font-size: 7px;
+  text-transform: uppercase;
+}
+
 .recommendation-list dl {
   display: flex;
   gap: 12px;

@@ -102,9 +102,15 @@ function ReadinessItem({ done, label, detail }: { done: boolean; label: string; 
 function RecommendationList({
   recommendations,
   empty,
+  automationArmed,
+  busy,
+  onExecute,
 }: {
   recommendations: Recommendation[];
   empty: string;
+  automationArmed: boolean;
+  busy: string | null;
+  onExecute: (recommendation: Recommendation) => Promise<void>;
 }) {
   if (recommendations.length === 0) {
     return (
@@ -122,6 +128,20 @@ function RecommendationList({
           <div>
             <h3>{recommendation.title}</h3>
             <p>{recommendation.rationale}</p>
+            {recommendation.action ? (
+              <button
+                className="recommendation-action"
+                type="button"
+                disabled={Boolean(busy) || !automationArmed}
+                title={automationArmed ? undefined : 'Arm the matching action in Automation first'}
+                onClick={() => void onExecute(recommendation)}
+              >
+                <ShieldCheck size={13} />
+                {busy === `action:${recommendation.id}` ? 'Verifying…' : 'Execute on ESPN'}
+              </button>
+            ) : (
+              <small className="advisory-label">Advisory only</small>
+            )}
           </div>
           <dl>
             <div>
@@ -274,6 +294,26 @@ export function App() {
     );
     if (completed === null) return;
     await refreshTeam(team.id);
+  }
+
+  async function executeRecommendation(recommendation: Recommendation) {
+    if (!team || !recommendation.action) return;
+    const confirmed = window.confirm(
+      `Execute “${recommendation.title}” in ESPN?\n\nThe app will validate the live portal, make at most one submission attempt, and read the result back.`,
+    );
+    if (!confirmed) return;
+    const result = await perform(
+      `action:${recommendation.id}`,
+      () => api.executeRecommendation(team.id, recommendation.id),
+      'ESPN action completed',
+    );
+    if (!result) return;
+    setNotice(
+      result.outcome === 'verified'
+        ? 'ESPN action verified by read-back'
+        : `${result.outcome.replaceAll('_', ' ')}: ${result.errorCode ?? result.evidence.at(-1) ?? 'Review the portal'}`,
+    );
+    await Promise.all([refreshTeam(team.id), refreshBootstrap(team.id)]);
   }
 
   async function uploadRules(file: File): Promise<RuleImportResult | null> {
@@ -477,6 +517,7 @@ export function App() {
                 busy={busy}
                 onRun={runJob}
                 onSyncEspn={syncEspn}
+                onExecute={executeRecommendation}
                 onNavigate={setTab}
               />
             ) : null}
@@ -490,6 +531,7 @@ export function App() {
                 detail={selectedDetail}
                 busy={busy}
                 onRun={() => runJob('daily_manager')}
+                onExecute={executeRecommendation}
               />
             ) : null}
             {tab === 'waivers' ? (
@@ -498,6 +540,7 @@ export function App() {
                 detail={selectedDetail}
                 busy={busy}
                 onRun={() => runJob('waiver_plan')}
+                onExecute={executeRecommendation}
               />
             ) : null}
             {tab === 'trades' ? (
@@ -506,6 +549,7 @@ export function App() {
                 detail={selectedDetail}
                 busy={busy}
                 onRun={() => runJob('trade_market')}
+                onExecute={executeRecommendation}
               />
             ) : null}
             {tab === 'rules' ? (
@@ -588,6 +632,7 @@ function CommandCenter({
   busy,
   onRun,
   onSyncEspn,
+  onExecute,
   onNavigate,
 }: {
   detail: TeamDetail;
@@ -596,6 +641,7 @@ function CommandCenter({
   busy: string | null;
   onRun: (job: string) => Promise<void>;
   onSyncEspn: () => Promise<void>;
+  onExecute: (recommendation: Recommendation) => Promise<void>;
   onNavigate: (tab: Tab) => void;
 }) {
   const { team } = detail;
@@ -807,6 +853,9 @@ function CommandCenter({
           <RecommendationList
             recommendations={detail.recommendations.slice(0, 4)}
             empty="Complete onboarding and run the daily manager to generate grounded actions."
+            automationArmed={team.automation.armed}
+            busy={busy}
+            onExecute={onExecute}
           />
         </article>
         <article className="dashboard-panel run-panel">
@@ -938,11 +987,13 @@ function DecisionDesk({
   detail,
   busy,
   onRun,
+  onExecute,
 }: {
   kind: 'draft' | 'waiver' | 'trade';
   detail: TeamDetail;
   busy: string | null;
   onRun: () => Promise<void>;
+  onExecute: (recommendation: Recommendation) => Promise<void>;
 }) {
   const copy = {
     draft: {
@@ -993,7 +1044,13 @@ function DecisionDesk({
           {kind === 'draft' ? <Trophy /> : kind === 'waiver' ? <ListPlus /> : <Scale />}
         </div>
       </article>
-      <RecommendationList recommendations={recommendations} empty={copy.empty} />
+      <RecommendationList
+        recommendations={recommendations}
+        empty={copy.empty}
+        automationArmed={detail.team.automation.armed}
+        busy={busy}
+        onExecute={onExecute}
+      />
       <article className="guardrail-panel">
         <ShieldCheck size={20} />
         <div>

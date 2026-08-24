@@ -180,6 +180,14 @@ export type AutomationRun = {
   errorMessage: string | null;
 };
 
+export type ActionExecutionResult = {
+  outcome: 'verified' | 'failed' | 'needs_attention' | 'cancelled';
+  performed: boolean;
+  replayed: boolean;
+  evidence: string[];
+  errorCode: string | null;
+};
+
 export type TeamDetail = {
   team: Team;
   rules: RuleSet[];

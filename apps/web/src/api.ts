@@ -1,4 +1,5 @@
 import type {
+  ActionExecutionResult,
   AutomationPolicy,
   Bootstrap,
   CreateTeamInput,
@@ -100,4 +101,9 @@ export const api = {
     await request<unknown>(`/api/teams/${teamId}/jobs/${jobType}/run`, json('POST')),
   syncEspn: async (teamId: string) =>
     await request<unknown>(`/api/teams/${teamId}/espn/sync`, json('POST')),
+  executeRecommendation: async (teamId: string, recommendationId: string) =>
+    await request<ActionExecutionResult>(
+      `/api/teams/${teamId}/recommendations/${recommendationId}/execute`,
+      json('POST', { confirmation: 'EXECUTE ESPN ACTION' }),
+    ),
 };

@@ -22,6 +22,7 @@ import { z, ZodError } from 'zod';
 
 import { RuleImportService, type CodexRuleExtractor } from './rule-import-service.js';
 import { portalSnapshotView, type EspnSnapshotService } from './espn-snapshot-service.js';
+import type { EspnActionService } from './espn-action-service.js';
 
 const teamParamsSchema = z.object({ teamId: z.string().uuid() });
 const ruleParamsSchema = teamParamsSchema.extend({ ruleSetId: z.string().uuid() });
@@ -34,6 +35,12 @@ const jobParamsSchema = teamParamsSchema.extend({
     'trade_market',
     'lineup_watch',
   ]),
+});
+const recommendationParamsSchema = teamParamsSchema.extend({
+  recommendationId: z.string().uuid(),
+});
+const executeRecommendationSchema = z.object({
+  confirmation: z.literal('EXECUTE ESPN ACTION'),
 });
 
 const createTeamSchema = z.object({
@@ -87,6 +94,7 @@ export type ServerOptions = {
     Partial<Pick<LocalTeamScheduler, 'start'>>;
   ruleExtractor?: CodexRuleExtractor | null;
   espnSnapshots?: Pick<EspnSnapshotService, 'sync'> | null;
+  espnActions?: Pick<EspnActionService, 'executeRecommendation'> | null;
   codexReadiness?: (() => Promise<CodexReadiness>) | null;
   now?: () => Date;
 };
@@ -170,6 +178,18 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
     }
     if (message.includes('CODEX_ESPN_UNAVAILABLE')) {
       void reply.code(503).send({ error: 'CODEX_ESPN_UNAVAILABLE', message });
+      return;
+    }
+    if (message === 'ACTION_RECOMMENDATION_NOT_ACTIVE') {
+      void reply.code(404).send({ error: message });
+      return;
+    }
+    if (message === 'ACTION_RECOMMENDATION_IS_ADVISORY') {
+      void reply.code(422).send({ error: message });
+      return;
+    }
+    if (message === 'ACTION_ESPN_SNAPSHOT_REQUIRED') {
+      void reply.code(409).send({ error: message });
       return;
     }
     if (message === 'ESPN_AUTH_REQUIRED' || message === 'ESPN_BINDING_MISMATCH') {
@@ -402,6 +422,20 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
     const { teamId } = teamParamsSchema.parse(request.params);
     return recommendations.listActive(teamId, now().toISOString());
   });
+
+  app.post(
+    '/api/teams/:teamId/recommendations/:recommendationId/execute',
+    async (request, reply) => {
+      const { teamId, recommendationId } = recommendationParamsSchema.parse(request.params);
+      executeRecommendationSchema.parse(request.body);
+      const team = teams.getById(teamId);
+      if (!team) return await reply.code(404).send({ error: 'NOT_FOUND' });
+      if (!options.espnActions) {
+        return await reply.code(503).send({ error: 'CODEX_ESPN_UNAVAILABLE' });
+      }
+      return await options.espnActions.executeRecommendation(team, recommendationId);
+    },
+  );
 
   app.get('/api/teams/:teamId/espn/snapshot', async (request, reply) => {
     const { teamId } = teamParamsSchema.parse(request.params);

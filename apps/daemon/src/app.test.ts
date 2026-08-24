@@ -275,4 +275,51 @@ describe('local daemon API', () => {
     expect(sync).toHaveBeenCalledWith(expect.objectContaining({ id: team.id }));
     expect(team.automation.armed).toBe(false);
   });
+
+  it('requires explicit confirmation before handing a recommendation to the ESPN executor', async () => {
+    const executeRecommendation = vi.fn(async (team: TeamConfigV1, recommendationId: string) => ({
+      outcome: 'verified' as const,
+      intent: {
+        schemaVersion: 1 as const,
+        id: randomUUID(),
+        teamId: team.id,
+        recommendationId,
+        type: 'lineup_change' as const,
+        payload: { playerInId: 'bench-rb', playerOutId: 'starter-rb', targetSlot: 'RB' },
+        idempotencyKey: 'a'.repeat(64),
+        status: 'verified' as const,
+        createdAt: now,
+        updatedAt: now,
+      },
+      performed: true,
+      replayed: false,
+      beforeDigest: 'b'.repeat(64),
+      afterDigest: 'c'.repeat(64),
+      evidence: ['Verified in test'],
+      errorCode: null,
+    }));
+    const app = await server({ espnActions: { executeRecommendation } });
+    const team = await createTeam(app);
+    const recommendationId = randomUUID();
+
+    const rejected = await app.inject({
+      method: 'POST',
+      url: `/api/teams/${team.id}/recommendations/${recommendationId}/execute`,
+      payload: { confirmation: 'yes' },
+    });
+    expect(rejected.statusCode).toBe(400);
+    expect(executeRecommendation).not.toHaveBeenCalled();
+
+    const executed = await app.inject({
+      method: 'POST',
+      url: `/api/teams/${team.id}/recommendations/${recommendationId}/execute`,
+      payload: { confirmation: 'EXECUTE ESPN ACTION' },
+    });
+    expect(executed.statusCode).toBe(200);
+    expect(executed.json()).toMatchObject({ outcome: 'verified', performed: true });
+    expect(executeRecommendation).toHaveBeenCalledWith(
+      expect.objectContaining({ id: team.id }),
+      recommendationId,
+    );
+  });
 });

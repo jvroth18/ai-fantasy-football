@@ -18,6 +18,7 @@ import { buildServer } from './app.js';
 import { CodexClientManager } from './codex-manager.js';
 import { CodexPlayerValueService, type PlayerValueProvider } from './codex-player-values.js';
 import { CodexRuleExtractorService } from './codex-rule-extractor.js';
+import { EspnActionService } from './espn-action-service.js';
 import { defaultNewsFeeds, ManagementJobs } from './management-jobs.js';
 import type { CodexRuleExtractor } from './rule-import-service.js';
 import { EspnSnapshotService } from './espn-snapshot-service.js';
@@ -84,6 +85,25 @@ const definitions = defineManagementJobs(management.handlers());
 const runner = new DurableJobRunner(runs, leases);
 const scheduler = new LocalTeamScheduler(teams, runner, definitions);
 const espnSnapshots = { sync: syncEspnSnapshot };
+const espnActions = new EspnActionService(database.db, async (team) => {
+  const client = await codex.client(workspaceRoot);
+  const readiness = await client.readiness(workspaceRoot);
+  if (!readiness.readyForEspn) {
+    throw new Error(`CODEX_ESPN_UNAVAILABLE: ${readiness.issues.join('; ')}`);
+  }
+  const thread = await client.startDecisionThread({
+    cwd: workspaceRoot,
+    ephemeral: true,
+    baseInstructions: [
+      'Operate the authenticated ESPN Fantasy Football portal through visible Computer Use only.',
+      `The only permitted account scope is league ${team.espnLeagueId}, team ${team.espnTeamId}.`,
+      'Observe freely, but mutate only when the application supplies one exact policy-approved action.',
+      'Make no more than one submission attempt and never retry an ambiguous result.',
+      'Never accept an incoming trade, call private endpoints, bypass login or MFA, or expose credentials, cookies, tokens, personal details, or screenshots.',
+    ].join('\n'),
+  });
+  return new CodexEspnPortalAdapter(client, thread.threadId);
+});
 
 await scheduler.start(false);
 const app = await buildServer({
@@ -92,6 +112,7 @@ const app = await buildServer({
   scheduler,
   ruleExtractor,
   espnSnapshots,
+  espnActions,
   codexReadiness: async () => await codex.readiness(workspaceRoot),
 });
 await app.listen({ host, port });

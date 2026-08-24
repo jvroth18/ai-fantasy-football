@@ -165,6 +165,10 @@ describe('workflow persistence', () => {
     expect(teams.getById(teamA.id)?.strategyProfileId).toBe(profile.id);
     expect(strategies.getForTeam(teamB.id, profile.id)).toBeNull();
     expect(recommendations.listActive(teamA.id, now)).toEqual([recommendation]);
+    expect(recommendations.getActiveForTeam(teamA.id, recommendation.id, now)).toEqual(
+      recommendation,
+    );
+    expect(recommendations.getActiveForTeam(teamB.id, recommendation.id, now)).toBeNull();
     expect(recommendations.listActive(teamB.id, now)).toEqual([]);
   });
 
@@ -207,6 +211,8 @@ describe('workflow persistence', () => {
 
     expect(actions.getByIdempotencyKey(teamA.id, sharedKey)?.id).toBe(actionA.id);
     expect(actions.getByIdempotencyKey(teamB.id, sharedKey)?.id).toBe(actionB.id);
+    expect(actions.getForTeam(teamA.id, actionA.id)).toEqual(actionA);
+    expect(actions.listForTeam(teamA.id)).toEqual([actionA]);
     expect(() => actions.save(intentFixture(teamA.id, sharedKey))).toThrow(
       'already belongs to another action intent',
     );
