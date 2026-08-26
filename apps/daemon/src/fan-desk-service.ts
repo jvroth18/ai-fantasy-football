@@ -36,7 +36,6 @@ export type FanEmailSender = (message: FanEmailMessage) => Promise<{
 
 export type FanDeskServiceOptions = {
   writer?: FanVoiceWriter;
-  syncPortal?: (team: TeamConfigV1) => Promise<unknown>;
   networkDispatch?: (input: {
     team: TeamConfigV1;
     type: 'fan.post.drafted';
@@ -104,7 +103,6 @@ export class FanDeskService {
   readonly #portalSnapshots: PortalSnapshotRepository;
   readonly #news: NewsRepository;
   readonly #writer: FanVoiceWriter | undefined;
-  readonly #syncPortal: ((team: TeamConfigV1) => Promise<unknown>) | undefined;
   readonly #networkDispatch: FanDeskServiceOptions['networkDispatch'];
   readonly #email: FanEmailSender | undefined;
   readonly #now: () => Date;
@@ -117,17 +115,17 @@ export class FanDeskService {
     this.#portalSnapshots = new PortalSnapshotRepository(database);
     this.#news = new NewsRepository(database);
     this.#writer = options.writer;
-    this.#syncPortal = options.syncPortal;
     this.#networkDispatch = options.networkDispatch;
     this.#email = options.email;
     this.#now = options.now ?? (() => new Date());
   }
 
   profile(team: TeamConfigV1): FanDeskProfileV1 {
-    return (
-      this.#repository.getProfile(team.id) ??
-      this.#repository.saveProfile(defaultProfile(team, this.#now().toISOString()))
-    );
+    return this.#repository.getProfile(team.id) ?? defaultProfile(team, this.#now().toISOString());
+  }
+
+  configured(teamId: string): boolean {
+    return this.#repository.getProfile(teamId) !== null;
   }
 
   saveProfile(
@@ -159,17 +157,14 @@ export class FanDeskService {
   async generate(
     team: TeamConfigV1,
   ): Promise<{ post: FanPostV1; email: StoredFanEmail | null; syncWarning: string | null }> {
-    const profile = this.profile(team);
+    const profile =
+      this.#repository.getProfile(team.id) ??
+      this.#repository.saveProfile(defaultProfile(team, this.#now().toISOString()));
     if (!profile.enabled) throw new Error('FAN_DESK_DISABLED');
-    let syncWarning: string | null = null;
-    if (this.#syncPortal) {
-      try {
-        await this.#syncPortal(team);
-      } catch (error) {
-        syncWarning = error instanceof Error ? error.message : String(error);
-      }
-    }
     const snapshots = this.#portalSnapshots.listRecentForTeam(team.id, 2).map(portalSnapshot);
+    let syncWarning: string | null = snapshots.length
+      ? null
+      : 'No ESPN snapshot yet; commentary is based on current news only';
     const context: FanDeskContext = {
       team,
       profile,

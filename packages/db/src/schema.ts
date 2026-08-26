@@ -296,6 +296,51 @@ export const leaguePosts = sqliteTable(
   (table) => [index('league_posts_team_created_idx').on(table.teamId, table.createdAt)],
 );
 
+export const leagueReactions = sqliteTable(
+  'league_reactions',
+  {
+    id: text('id').primaryKey(),
+    teamId: text('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    memberId: text('member_id')
+      .notNull()
+      .references(() => leagueMembers.id, { onDelete: 'cascade' }),
+    targetType: text('target_type', { enum: ['member_post', 'ai_post', 'news'] }).notNull(),
+    targetId: text('target_id').notNull(),
+    createdAt: text('created_at').notNull(),
+  },
+  (table) => [
+    uniqueIndex('league_reactions_member_target_unique').on(
+      table.teamId,
+      table.memberId,
+      table.targetType,
+      table.targetId,
+    ),
+    index('league_reactions_team_target_idx').on(table.teamId, table.targetType, table.targetId),
+  ],
+);
+
+export const leagueComments = sqliteTable(
+  'league_comments',
+  {
+    id: text('id').primaryKey(),
+    teamId: text('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    memberId: text('member_id')
+      .notNull()
+      .references(() => leagueMembers.id, { onDelete: 'cascade' }),
+    targetType: text('target_type', { enum: ['member_post', 'ai_post', 'news'] }).notNull(),
+    targetId: text('target_id').notNull(),
+    body: text('body').notNull(),
+    createdAt: text('created_at').notNull(),
+  },
+  (table) => [
+    index('league_comments_team_target_idx').on(table.teamId, table.targetType, table.targetId),
+  ],
+);
+
 export const fanEmailOutbox = sqliteTable(
   'fan_email_outbox',
   {

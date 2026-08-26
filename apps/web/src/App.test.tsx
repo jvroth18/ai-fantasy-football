@@ -126,6 +126,63 @@ describe('application shell', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Agent network' })).toBeInTheDocument();
   });
 
+  it('supports durable feed reactions and inline comments for the active member', async () => {
+    const configuredTeam = team();
+    const owner = {
+      id: '3d92e4c7-6637-4f7a-a07f-9bbb61e6bc31',
+      teamId: configuredTeam.id,
+      displayName: 'Commissioner',
+      role: 'owner' as const,
+      joinedAt: now,
+    };
+    const post = {
+      id: 'd3898e10-7581-4dc2-9582-b14726f203eb',
+      teamId: configuredTeam.id,
+      memberId: owner.id,
+      authorName: owner.displayName,
+      body: 'Waiver night starts now.',
+      createdAt: now,
+    };
+    const teamDetail: TeamDetail = {
+      ...detail(configuredTeam),
+      members: [owner],
+      leaguePosts: [post],
+      leagueReactions: [],
+      leagueComments: [],
+      news: [],
+      newsUpdatedAt: null,
+    };
+    const fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/bootstrap') return response(bootstrap([configuredTeam]));
+      if (init?.method === 'POST') return response({ active: true });
+      return response(teamDetail);
+    });
+    vi.stubGlobal('fetch', fetch);
+
+    render(<App />);
+    expect(await screen.findByText(post.body)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Like' }));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        `/api/teams/${configuredTeam.id}/reactions/toggle`,
+        expect.objectContaining({ method: 'POST' }),
+      ),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Comment' }));
+    fireEvent.change(screen.getByLabelText('Write a comment'), {
+      target: { value: 'Ready.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Reply' }));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        `/api/teams/${configuredTeam.id}/comments`,
+        expect.objectContaining({ method: 'POST' }),
+      ),
+    );
+  });
+
   it('keeps the automation save gate disabled until the exact arming phrase is typed', async () => {
     const configuredTeam = team();
     vi.stubGlobal(

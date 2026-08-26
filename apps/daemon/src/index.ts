@@ -132,7 +132,6 @@ const fanVoiceWriter: FanVoiceWriter = async ({ profile, team, seed, context }) 
 const fanNetwork = new FanNetworkService(database.db);
 const fanDesk = new FanDeskService(database.db, {
   writer: fanVoiceWriter,
-  syncPortal: syncEspnSnapshot,
   networkDispatch: async (input) => await fanNetwork.dispatch(input),
   email: resendEmailSender(),
 });

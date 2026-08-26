@@ -63,7 +63,7 @@ export function FanDeskPanel({ state, busy, onSave, onGenerate }: Props) {
         <div className="fan-desk-signal">
           <Flame size={18} />
           <span>
-            Heat <b>{Math.round((state?.profile.heat ?? draft.heat) * 100)}%</b>
+            Energy <b>{Math.round((state?.profile.heat ?? draft.heat) * 100)}%</b>
           </span>
         </div>
         <div className="fan-desk-signal">
@@ -75,7 +75,8 @@ export function FanDeskPanel({ state, busy, onSave, onGenerate }: Props) {
         <button
           className="primary-button"
           type="button"
-          disabled={Boolean(busy) || !draft.enabled}
+          disabled={Boolean(busy) || !draft.enabled || !state?.configured}
+          title={state?.configured ? undefined : 'Choose and save a host first'}
           onClick={() => void onGenerate()}
         >
           <Sparkles size={17} /> {busy === 'fan-generate' ? 'Watching…' : 'Generate bulletin'}
@@ -85,10 +86,32 @@ export function FanDeskPanel({ state, busy, onSave, onGenerate }: Props) {
       <form className="form-panel fan-desk-settings" onSubmit={submit}>
         <div className="panel-title">
           <div>
-            <p className="kicker">VOICE SETTINGS</p>
-            <h3>Pick the personality</h3>
+            <p className="kicker">ONE QUICK CHOICE</p>
+            <h3>Choose your league host</h3>
           </div>
           <Flame size={19} />
+        </div>
+        <div className="personality-presets" role="radiogroup" aria-label="AI personality">
+          {(
+            [
+              ['superfan', 'Superfan', 'Big energy and loyal optimism.'],
+              ['contrarian', 'Contrarian', 'Sharp counterpoints and debate.'],
+              ['analyst', 'Analyst', 'Measured, evidence-first commentary.'],
+              ['commissioner', 'Commissioner', 'Fair, composed league updates.'],
+            ] as const
+          ).map(([value, label, description]) => (
+            <button
+              key={value}
+              type="button"
+              role="radio"
+              aria-checked={draft.voice === value}
+              className={draft.voice === value ? 'active' : ''}
+              onClick={() => setDraft({ ...draft, voice: value })}
+            >
+              <b>{label}</b>
+              <span>{description}</span>
+            </button>
+          ))}
         </div>
         <div className="fan-desk-grid">
           <label>
@@ -100,21 +123,7 @@ export function FanDeskPanel({ state, busy, onSave, onGenerate }: Props) {
             />
           </label>
           <label>
-            Voice
-            <select
-              value={draft.voice}
-              onChange={(event) =>
-                setDraft({ ...draft, voice: event.target.value as FanDeskInput['voice'] })
-              }
-            >
-              <option value="superfan">Superfan</option>
-              <option value="contrarian">Contrarian</option>
-              <option value="analyst">Sports analyst</option>
-              <option value="commissioner">Commissioner</option>
-            </select>
-          </label>
-          <label>
-            Cadence
+            Posting rhythm
             <select
               value={draft.cadence}
               onChange={(event) =>
@@ -127,64 +136,71 @@ export function FanDeskPanel({ state, busy, onSave, onGenerate }: Props) {
               <option value="weekly">Weekly</option>
             </select>
           </label>
-          <label>
-            Email recipient
-            <input
-              type="email"
-              placeholder="you@example.com"
-              value={draft.emailAddress ?? ''}
-              onChange={(event) => setDraft({ ...draft, emailAddress: event.target.value || null })}
-            />
-          </label>
-          <label className="fan-desk-range">
-            Heat <output>{Math.round(draft.heat * 100)}%</output>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={draft.heat}
-              onChange={(event) => setDraft({ ...draft, heat: Number(event.target.value) })}
-            />
-          </label>
-          <label className="fan-desk-range">
-            Rumor tolerance <output>{Math.round(draft.rumorTolerance * 100)}%</output>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={draft.rumorTolerance}
-              onChange={(event) =>
-                setDraft({ ...draft, rumorTolerance: Number(event.target.value) })
-              }
-            />
-          </label>
         </div>
-        <label className="toggle-row">
-          <span>
-            <b>Publish this desk</b>
-            <small>Disable it to pause scheduled bulletins without losing the archive.</small>
-          </span>
-          <input
-            type="checkbox"
-            checked={draft.enabled}
-            onChange={(event) => setDraft({ ...draft, enabled: event.target.checked })}
-          />
-        </label>
-        <label className="toggle-row">
-          <span>
-            <b>Send email digests</b>
-            <small>Requires a configured Resend sender in the local daemon.</small>
-          </span>
-          <input
-            type="checkbox"
-            checked={draft.emailEnabled}
-            onChange={(event) => setDraft({ ...draft, emailEnabled: event.target.checked })}
-          />
-        </label>
-        <button className="ghost-button align-self" type="submit" disabled={Boolean(busy)}>
-          <Save size={16} /> {busy === 'fan-save' ? 'Saving…' : 'Save fan desk'}
+        <details className="advanced-settings">
+          <summary>Advanced voice and delivery settings</summary>
+          <div className="fan-desk-grid">
+            <label>
+              Email recipient
+              <input
+                type="email"
+                placeholder="you@example.com"
+                value={draft.emailAddress ?? ''}
+                onChange={(event) =>
+                  setDraft({ ...draft, emailAddress: event.target.value || null })
+                }
+              />
+            </label>
+            <label className="fan-desk-range">
+              Energy <output>{Math.round(draft.heat * 100)}%</output>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={draft.heat}
+                onChange={(event) => setDraft({ ...draft, heat: Number(event.target.value) })}
+              />
+            </label>
+            <label className="fan-desk-range">
+              Rumor tolerance <output>{Math.round(draft.rumorTolerance * 100)}%</output>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={draft.rumorTolerance}
+                onChange={(event) =>
+                  setDraft({ ...draft, rumorTolerance: Number(event.target.value) })
+                }
+              />
+            </label>
+          </div>
+          <label className="toggle-row">
+            <span>
+              <b>Publish this desk</b>
+              <small>Pause scheduled bulletins without losing the archive.</small>
+            </span>
+            <input
+              type="checkbox"
+              checked={draft.enabled}
+              onChange={(event) => setDraft({ ...draft, enabled: event.target.checked })}
+            />
+          </label>
+          <label className="toggle-row">
+            <span>
+              <b>Send email digests</b>
+              <small>Requires a configured sender in the local daemon.</small>
+            </span>
+            <input
+              type="checkbox"
+              checked={draft.emailEnabled}
+              onChange={(event) => setDraft({ ...draft, emailEnabled: event.target.checked })}
+            />
+          </label>
+        </details>
+        <button className="primary-button align-self" type="submit" disabled={Boolean(busy)}>
+          <Save size={16} /> {busy === 'fan-save' ? 'Saving…' : 'Use this host'}
         </button>
       </form>
 

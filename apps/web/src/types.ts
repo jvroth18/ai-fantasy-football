@@ -199,7 +199,10 @@ export type TeamDetail = {
   fanNetwork?: FanNetworkState | null;
   members?: LeagueMember[];
   leaguePosts?: LeaguePost[];
+  leagueReactions?: LeagueReaction[];
+  leagueComments?: LeagueComment[];
   news?: LeagueNewsItem[];
+  newsUpdatedAt?: string | null;
 };
 
 export type LeagueMember = {
@@ -214,6 +217,25 @@ export type LeaguePost = {
   teamId: string;
   memberId: string;
   authorName: string;
+  body: string;
+  createdAt: string;
+};
+export type LeagueTargetType = 'member_post' | 'ai_post' | 'news';
+export type LeagueReaction = {
+  id: string;
+  teamId: string;
+  memberId: string;
+  targetType: LeagueTargetType;
+  targetId: string;
+  createdAt: string;
+};
+export type LeagueComment = {
+  id: string;
+  teamId: string;
+  memberId: string;
+  authorName: string;
+  targetType: LeagueTargetType;
+  targetId: string;
   body: string;
   createdAt: string;
 };
@@ -291,7 +313,12 @@ export type FanEmail = {
   sentAt: string | null;
 };
 
-export type FanDeskState = { profile: FanDeskProfile; posts: FanPost[]; emails: FanEmail[] };
+export type FanDeskState = {
+  configured?: boolean;
+  profile: FanDeskProfile;
+  posts: FanPost[];
+  emails: FanEmail[];
+};
 export type FanDeskInput = Omit<
   FanDeskProfile,
   'schemaVersion' | 'id' | 'teamId' | 'createdAt' | 'updatedAt'

@@ -6,23 +6,23 @@
     BlinkMacSystemFont,
     'Segoe UI',
     sans-serif;
-  color: #ecf4ef;
-  background: #07100c;
+  color: #20241f;
+  background: #e9e7df;
   font-synthesis: none;
-  --team-accent: #b9f55b;
-  --bg: #07100c;
-  --sidebar: #09140f;
-  --panel: #0d1a14;
-  --panel-soft: #101f18;
-  --panel-raised: #13251c;
-  --text: #ecf4ef;
-  --muted: #8da096;
-  --faint: #607269;
-  --line: rgba(190, 224, 204, 0.12);
-  --line-strong: rgba(190, 224, 204, 0.2);
-  --danger: #ff766f;
-  --warning: #f5bf63;
-  --success: #64dda0;
+  --team-accent: #5d7b62;
+  --bg: #e9e7df;
+  --sidebar: #f4f2eb;
+  --panel: #fffef9;
+  --panel-soft: #f2f0e8;
+  --panel-raised: #e4e2d9;
+  --text: #20241f;
+  --muted: #626962;
+  --faint: #8a908a;
+  --line: rgba(37, 43, 38, 0.14);
+  --line-strong: rgba(37, 43, 38, 0.25);
+  --danger: #a7433e;
+  --warning: #93691d;
+  --success: #3f704c;
 }
 
 * {
@@ -51,13 +51,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background:
-    radial-gradient(
-      circle at 85% 0%,
-      color-mix(in srgb, var(--team-accent) 8%, transparent),
-      transparent 28rem
-    ),
-    var(--bg);
+  background: var(--bg);
 }
 
 /* Distilled league experience */
@@ -177,6 +171,19 @@ body {
   background: var(--team-accent);
   font-weight: 900;
 }
+.composer-identity {
+  display: grid;
+  gap: 5px;
+  justify-items: center;
+}
+.composer-identity select {
+  width: 78px;
+  padding: 3px;
+  color: #4f5551;
+  border: 0;
+  background: transparent;
+  font-size: 9px;
+}
 .post-avatar.human {
   color: var(--text);
   background: var(--panel-raised);
@@ -283,6 +290,48 @@ body {
 .post-actions button:hover,
 .post-actions button.liked {
   color: var(--team-accent);
+}
+.post-conversation {
+  margin-top: 12px;
+}
+.comment-thread {
+  display: grid;
+  gap: 7px;
+  margin-top: 12px;
+  padding-left: 12px;
+  border-left: 2px solid #d4d1c7;
+}
+.comment-thread p {
+  margin: 0;
+  color: #4c524e;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.comment-thread b {
+  color: #171a18;
+}
+.inline-comment {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 7px;
+  margin-top: 10px;
+}
+.inline-comment input {
+  min-width: 0;
+  min-height: 34px;
+  padding: 0 9px;
+  color: #171a18;
+  border: 1px solid #c4c0b5;
+  border-radius: 2px;
+  background: #fffef9;
+}
+.inline-comment button {
+  padding: 0 11px;
+  color: #142016;
+  border: 0;
+  border-radius: 2px;
+  background: var(--team-accent);
+  font-weight: 800;
 }
 .news-feed-card {
   padding: 22px 24px;
@@ -572,6 +621,9 @@ body {
   border-radius: 50%;
   background: #198754;
 }
+.league-score-strip i.offline {
+  background: #8c918d;
+}
 
 .feed-tabs {
   gap: 0;
@@ -818,6 +870,10 @@ body {
   overflow: hidden;
   color: var(--text);
   text-overflow: ellipsis;
+}
+.invite-card b {
+  color: var(--text);
+  font-size: 13px;
 }
 
 .member-add-form {
@@ -1679,6 +1735,54 @@ b {
 }
 .fan-desk-hero .primary-button {
   margin-left: auto;
+}
+
+.personality-presets {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.personality-presets button {
+  display: grid;
+  gap: 5px;
+  padding: 16px;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-soft);
+  text-align: left;
+}
+
+.personality-presets button.active {
+  border-color: var(--team-accent);
+  box-shadow: inset 0 0 0 1px var(--team-accent);
+}
+
+.personality-presets button span {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.advanced-settings {
+  margin-bottom: 16px;
+  padding: 13px 15px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.advanced-settings summary {
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.advanced-settings[open] summary {
+  margin-bottom: 16px;
 }
 
 .fan-desk-grid {
@@ -3259,6 +3363,10 @@ b {
     grid-template-columns: 1fr;
   }
 
+  .personality-presets {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .fixed-off,
   .policy-limits .panel-title {
     grid-column: auto;
@@ -3270,6 +3378,22 @@ b {
 
   .team-switcher > label {
     display: none;
+  }
+
+  .sidebar nav {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  .sidebar nav button {
+    min-width: 0;
+    justify-content: center;
+    padding-inline: 7px;
+  }
+
+  .sidebar nav button span {
+    font-size: 9px;
   }
 
   .workspace {
@@ -3385,5 +3509,466 @@ b {
   .roster-head,
   .roster-row {
     min-width: 600px;
+  }
+}
+
+/* Warm editorial light theme */
+.welcome-shell {
+  padding: 24px clamp(20px, 4vw, 56px) 40px;
+  color: var(--text);
+  background: #e9e7df;
+}
+
+.welcome-shell::after,
+.command-hero::after,
+.decision-hero::after {
+  display: none;
+}
+
+.welcome-grid {
+  gap: clamp(34px, 6vw, 88px);
+  min-height: calc(100vh - 76px);
+}
+
+.welcome-copy h1,
+.masthead-title,
+.section-heading h2,
+.command-hero h2,
+.decision-hero h2,
+.fan-post-card h3 {
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.welcome-copy h1 {
+  margin-bottom: 18px;
+  font-size: clamp(46px, 6.5vw, 80px);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+
+.welcome-copy > p:not(.kicker),
+.command-hero > div > p:not(.kicker),
+.decision-hero > div > p:not(.kicker),
+.section-heading > div > p:not(.kicker) {
+  color: var(--muted);
+}
+
+.welcome-signals {
+  margin-top: 24px;
+}
+
+.welcome-signals span,
+.fan-desk-signal,
+.count-badge,
+.method-badge {
+  color: var(--muted);
+  background: #f7f5ef;
+}
+
+.welcome-form-card,
+.modal-card {
+  color: var(--text);
+  border-radius: 3px;
+  background: #fffef9;
+  box-shadow: 0 14px 36px rgba(30, 34, 30, 0.12);
+  backdrop-filter: none;
+}
+
+.welcome-brand > span,
+.brand > span {
+  color: #fff;
+  border-radius: 2px;
+}
+
+.create-team-form label,
+.strategy-name,
+.compact-fields label,
+.policy-limits label,
+.confirmation-field,
+.fan-desk-grid label,
+.network-settings > label:first-of-type,
+.network-policy-grid > label:not(.toggle-row),
+.network-agent-card label {
+  color: var(--muted);
+}
+
+.create-team-form input,
+.strategy-name input,
+.compact-fields input,
+.position-weights input,
+.policy-limits input,
+.confirmation-field input,
+.fan-desk-grid input,
+.fan-desk-grid select,
+.network-settings input:not([type='checkbox']),
+.network-settings select,
+.network-agent-card input:not([type='checkbox']),
+.network-agent-card select,
+.network-policy-grid input:not([type='checkbox']),
+.file-picker,
+.member-add-form input {
+  color: var(--text);
+  border-radius: 2px;
+  background: #fffef9;
+}
+
+.create-team-form input::placeholder,
+.policy-limits input::placeholder {
+  color: var(--faint);
+}
+
+.color-input {
+  border-radius: 2px;
+  background: #fffef9;
+}
+
+.color-input span,
+.guardrail-panel b,
+.fan-post-dek,
+.fan-post-footer span,
+.event-row span,
+.roster-row b {
+  color: var(--text);
+}
+
+.safe-start {
+  color: #4e6454;
+  border-radius: 2px;
+}
+
+.primary-button,
+.ghost-button,
+.icon-button {
+  border-radius: 2px;
+  box-shadow: none;
+}
+
+.primary-button {
+  color: #fff;
+}
+
+.ghost-button,
+.icon-button {
+  color: var(--text);
+  background: #fffef9;
+}
+
+.sidebar {
+  width: 224px;
+  padding: 18px 14px 15px;
+  color: var(--text);
+  background: var(--sidebar);
+  box-shadow: none;
+}
+
+.brand {
+  padding-bottom: 16px;
+}
+
+.team-switcher {
+  padding-block: 12px;
+}
+
+.team-switcher i,
+.connection-dot.online,
+.armed-dot {
+  box-shadow: none;
+}
+
+.team-switcher select {
+  color: var(--text);
+  border-radius: 2px;
+  background: #fffef9;
+}
+
+.team-switcher > div svg,
+.team-switcher > button,
+.sidebar nav button,
+.local-status,
+.sidebar-footer small {
+  color: var(--muted);
+}
+
+.sidebar nav {
+  gap: 1px;
+  margin-top: 12px;
+}
+
+.sidebar nav button {
+  min-height: 38px;
+  border-radius: 2px;
+}
+
+.sidebar nav button:hover {
+  color: var(--text);
+  background: #ebe8de;
+}
+
+.sidebar nav button.active {
+  color: var(--text);
+  border-color: transparent;
+  background: #e5e2d8;
+}
+
+.sidebar nav button.active::before {
+  left: -5px;
+  width: 3px;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.sidebar-footer b {
+  color: var(--text);
+}
+
+.workspace {
+  margin-left: 224px;
+  padding: 0 clamp(16px, 2.4vw, 34px) 42px;
+}
+
+.workspace-header {
+  min-height: 68px;
+  margin-bottom: 16px;
+}
+
+.workspace-header h1 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 22px;
+}
+
+.content-stack {
+  gap: 12px;
+}
+
+.social-layout {
+  gap: 16px;
+  max-width: 1120px;
+}
+
+.feed-column {
+  box-shadow: 0 5px 18px rgba(30, 34, 30, 0.09);
+}
+
+.league-rail {
+  top: 16px;
+  padding: 18px;
+  color: var(--text);
+  border-color: #d2cfc5;
+  background: #f7f5ef;
+}
+
+.league-rail ul,
+.live-label,
+.pulse-stats span,
+.rail-news a small {
+  color: var(--muted);
+}
+
+.league-rail button,
+.rail-news a,
+.pulse-stats b {
+  color: var(--text);
+}
+
+.live-label span {
+  box-shadow: none;
+}
+
+.feed-section-label {
+  align-items: center;
+  padding-block: 9px 7px;
+}
+
+.feed-section-label > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.feed-section-label button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 7px;
+  color: #3f6048;
+  border: 1px solid #c8c5bb;
+  border-radius: 2px;
+  background: transparent;
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.feed-section-label button:disabled {
+  opacity: 0.55;
+}
+
+.dashboard-panel,
+.form-panel,
+.upload-card,
+.review-card,
+.version-row,
+.guardrail-panel,
+.roster-table,
+.snapshot-banner,
+.master-arm,
+.confirmation-field,
+.metric-grid article,
+.fan-desk-hero,
+.fan-post-card,
+.network-hero,
+.network-agent-card,
+.network-events-panel,
+.setup-steps article,
+.invite-card,
+.archive-grid button {
+  border-radius: 3px;
+  background: var(--panel);
+  box-shadow: none;
+}
+
+.section-heading {
+  gap: 18px;
+  padding: 2px 2px 11px;
+}
+
+.section-heading h2 {
+  margin: 4px 0 5px;
+  font-size: clamp(26px, 3.2vw, 38px);
+  letter-spacing: -0.035em;
+}
+
+.section-heading > div > p:not(.kicker) {
+  line-height: 1.5;
+}
+
+.snapshot-banner {
+  gap: 8px;
+  min-height: 0;
+  padding: 8px 10px;
+}
+
+.snapshot-banner b {
+  color: var(--text);
+}
+
+.snapshot-banner small,
+.snapshot-banner code {
+  color: var(--muted);
+}
+
+.personality-presets button,
+.advanced-settings {
+  border-radius: 3px;
+  background: var(--panel-soft);
+}
+
+.personality-presets button.active {
+  background: #e6eadf;
+  box-shadow: inset 3px 0 0 var(--team-accent);
+}
+
+.command-hero,
+.decision-hero {
+  min-height: 210px;
+  border-radius: 3px;
+  background: var(--panel);
+}
+
+.readiness-ring {
+  box-shadow: none;
+}
+
+.readiness-ring::before {
+  background: #fffef9;
+}
+
+.fan-post-meta,
+.fan-post-footer,
+.fan-post-body,
+.fan-post-footer small,
+.network-hero span,
+.network-agent-head small,
+.agent-flow,
+.route-row,
+.route-row small,
+.event-row small,
+.metric-grid article > small,
+.quiet-note,
+.upload-card p,
+.guardrail-panel p,
+.roster-row,
+.roster-row small,
+.modal-card > p:not(.kicker) {
+  color: var(--muted);
+}
+
+.modal-backdrop {
+  background: rgba(38, 42, 38, 0.48);
+  backdrop-filter: blur(3px);
+}
+
+.modal-close {
+  color: var(--muted);
+  border-radius: 2px;
+}
+
+.toast {
+  color: var(--text);
+  border-radius: 2px;
+  background: #fffef9;
+  box-shadow: 0 10px 30px rgba(30, 34, 30, 0.18);
+}
+
+.toast.error {
+  color: var(--danger);
+}
+
+.toast.success {
+  color: var(--success);
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    width: auto;
+  }
+
+  .workspace {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 680px) {
+  .welcome-shell {
+    padding-inline: 16px;
+  }
+
+  .workspace {
+    padding-inline: 11px;
+  }
+
+  .workspace-header {
+    min-height: 62px;
+    margin-bottom: 10px;
+  }
+
+  .content-stack {
+    gap: 9px;
+  }
+
+  .feed-section-label {
+    align-items: flex-start;
+    gap: 7px;
+    padding-inline: 16px;
+  }
+
+  .feed-section-label > div {
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .section-heading {
+    gap: 10px;
+    padding-bottom: 9px;
   }
 }

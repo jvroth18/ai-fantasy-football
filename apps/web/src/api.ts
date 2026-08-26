@@ -8,6 +8,7 @@ import type {
   FanDeskState,
   FanNetworkInput,
   FanNetworkState,
+  LeagueTargetType,
   Strategy,
   Team,
   TeamDetail,
@@ -134,4 +135,34 @@ export const api = {
     await request<unknown>(`/api/teams/${teamId}/members`, json('POST', { displayName })),
   createLeaguePost: async (teamId: string, memberId: string, body: string) =>
     await request<unknown>(`/api/teams/${teamId}/posts`, json('POST', { memberId, body })),
+  toggleLeagueReaction: async (
+    teamId: string,
+    memberId: string,
+    targetType: LeagueTargetType,
+    targetId: string,
+  ) =>
+    await request<{ active: boolean }>(
+      `/api/teams/${teamId}/reactions/toggle`,
+      json('POST', { memberId, targetType, targetId }),
+    ),
+  createLeagueComment: async (
+    teamId: string,
+    memberId: string,
+    targetType: LeagueTargetType,
+    targetId: string,
+    body: string,
+  ) =>
+    await request<unknown>(
+      `/api/teams/${teamId}/comments`,
+      json('POST', { memberId, targetType, targetId, body }),
+    ),
+  refreshFeed: async (teamId: string) =>
+    await request<{
+      status: 'complete' | 'partial';
+      steps: Record<
+        string,
+        { status: 'complete' | 'skipped' | 'needs_attention'; message: string | null }
+      >;
+      refreshedAt: string;
+    }>(`/api/teams/${teamId}/feed/refresh`, json('POST')),
 };

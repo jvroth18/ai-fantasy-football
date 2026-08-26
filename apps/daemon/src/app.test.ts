@@ -136,7 +136,7 @@ describe('local daemon API', () => {
     const team = await createTeam(app);
     const initial = await app.inject({ method: 'GET', url: `/api/teams/${team.id}` });
     const owner = initial.json<{ members: Array<{ id: string; displayName: string }> }>()
-      .members[0];
+      .members[0]!;
     expect(owner).toMatchObject({ displayName: 'Commissioner' });
 
     const member = await app.inject({
@@ -154,10 +154,44 @@ describe('local daemon API', () => {
     expect(post.statusCode).toBe(201);
     expect(post.json()).toMatchObject({ authorName: 'Jordan', body: 'Waiver night starts now.' });
 
+    const reaction = await app.inject({
+      method: 'POST',
+      url: `/api/teams/${team.id}/reactions/toggle`,
+      payload: {
+        memberId: owner.id,
+        targetType: 'member_post',
+        targetId: post.json<{ id: string }>().id,
+      },
+    });
+    expect(reaction.json()).toEqual({ active: true });
+
+    const comment = await app.inject({
+      method: 'POST',
+      url: `/api/teams/${team.id}/comments`,
+      payload: {
+        memberId: owner.id,
+        targetType: 'member_post',
+        targetId: post.json<{ id: string }>().id,
+        body: 'I am ready.',
+      },
+    });
+    expect(comment.statusCode).toBe(201);
+    expect(comment.json()).toMatchObject({ authorName: 'Commissioner', body: 'I am ready.' });
+
     const detail = await app.inject({ method: 'GET', url: `/api/teams/${team.id}` });
     expect(detail.json<{ leaguePosts: Array<{ body: string }> }>().leaguePosts).toEqual([
       expect.objectContaining({ body: 'Waiver night starts now.' }),
     ]);
+    expect(detail.json<{ leagueReactions: unknown[] }>().leagueReactions).toHaveLength(1);
+    expect(detail.json<{ leagueComments: unknown[] }>().leagueComments).toHaveLength(1);
+
+    const invalidPost = await app.inject({
+      method: 'POST',
+      url: `/api/teams/${team.id}/posts`,
+      payload: { memberId: randomUUID(), body: 'Not a member.' },
+    });
+    expect(invalidPost.statusCode).toBe(404);
+    expect(invalidPost.json()).toMatchObject({ error: 'LEAGUE_MEMBER_NOT_FOUND' });
   });
 
   it('uploads, reviews, and explicitly activates a versioned rule set', async () => {
@@ -254,6 +288,46 @@ describe('local daemon API', () => {
     });
     expect(run.statusCode).toBe(200);
     expect(trigger).toHaveBeenCalledWith(team.id, 'daily_manager');
+  });
+
+  it('refreshes feed sources independently and reports skipped commentary truthfully', async () => {
+    const trigger = vi.fn(async () => ({
+      schemaVersion: 1 as const,
+      id: randomUUID(),
+      teamId: '',
+      jobType: 'news_refresh' as const,
+      actionIntentId: null,
+      status: 'verified' as const,
+      attempt: 1,
+      errorCode: null,
+      errorMessage: null,
+      scheduledFor: now,
+      startedAt: now,
+      finishedAt: now,
+    }));
+    const sync = vi.fn(async () => undefined as never);
+    const app = await server({
+      scheduler: { entries: () => [], trigger },
+      espnSnapshots: { sync },
+    });
+    const team = await createTeam(app);
+
+    const refresh = await app.inject({
+      method: 'POST',
+      url: `/api/teams/${team.id}/feed/refresh`,
+    });
+
+    expect(refresh.statusCode).toBe(200);
+    expect(refresh.json()).toMatchObject({
+      status: 'complete',
+      steps: {
+        espn: { status: 'complete' },
+        news: { status: 'complete' },
+        commentary: { status: 'skipped' },
+      },
+    });
+    expect(sync).toHaveBeenCalledWith(expect.objectContaining({ id: team.id }));
+    expect(trigger).toHaveBeenCalledWith(team.id, 'news_refresh');
   });
 
   it('keeps fan desk configuration and generated posts scoped to the selected team', async () => {

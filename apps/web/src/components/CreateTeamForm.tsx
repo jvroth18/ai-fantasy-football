@@ -16,7 +16,7 @@ export function CreateTeamForm({ onCreate, busy, compact = false }: Props) {
     name: '',
     season: new Date().getFullYear(),
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York',
-    color: '#b9f55b',
+    color: '#5d7b62',
     espnLeagueId: '',
     espnTeamId: '',
   });

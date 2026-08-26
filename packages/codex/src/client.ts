@@ -181,7 +181,6 @@ export class CodexAppServerClient {
   ): Promise<{ threadId: string; model: string }> {
     const params: Record<string, unknown> = {
       cwd: options.cwd,
-      runtimeWorkspaceRoots: [options.cwd],
       approvalPolicy: 'never',
       sandbox: 'read-only',
       ephemeral: options.ephemeral ?? false,
@@ -205,7 +204,6 @@ export class CodexAppServerClient {
     await this.connection.request('thread/resume', {
       threadId,
       cwd,
-      runtimeWorkspaceRoots: [cwd],
       approvalPolicy: 'never',
       sandbox: 'read-only',
       excludeTurns: true,

@@ -102,10 +102,10 @@ describe('CodexAppServerClient', () => {
     const startMessage = transport.sent.find((message) => message.method === 'thread/start');
     expect(startMessage?.params).toMatchObject({
       cwd: '/project',
-      runtimeWorkspaceRoots: ['/project'],
       approvalPolicy: 'never',
       sandbox: 'read-only',
     });
+    expect(startMessage?.params).not.toHaveProperty('runtimeWorkspaceRoots');
     transport.response('thread/start', {
       thread: { id: 'thread-1' },
       model: 'gpt-5.6-codex',

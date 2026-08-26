@@ -127,6 +127,15 @@ const leaguePostInputSchema = z.object({
   memberId: z.string().uuid(),
   body: z.string().trim().min(1).max(1000),
 });
+const leagueTargetTypeSchema = z.enum(['member_post', 'ai_post', 'news']);
+const leagueReactionInputSchema = z.object({
+  memberId: z.string().uuid(),
+  targetType: leagueTargetTypeSchema,
+  targetId: z.string().trim().min(1).max(200),
+});
+const leagueCommentInputSchema = leagueReactionInputSchema.extend({
+  body: z.string().trim().min(1).max(500),
+});
 
 export type ServerOptions = {
   logger?: boolean;
@@ -136,10 +145,13 @@ export type ServerOptions = {
   ruleExtractor?: CodexRuleExtractor | null;
   espnSnapshots?: Pick<EspnSnapshotService, 'sync'> | null;
   espnActions?: Pick<EspnActionService, 'executeRecommendation'> | null;
-  fanDesk?: Pick<
-    FanDeskService,
-    'profile' | 'saveProfile' | 'posts' | 'emails' | 'generate' | 'runScheduled'
-  > | null;
+  fanDesk?:
+    | (Pick<
+        FanDeskService,
+        'profile' | 'saveProfile' | 'posts' | 'emails' | 'generate' | 'runScheduled'
+      > &
+        Partial<Pick<FanDeskService, 'configured'>>)
+    | null;
   fanNetwork?: Pick<
     FanNetworkService,
     'network' | 'saveNetwork' | 'events' | 'runs' | 'dispatch'
@@ -207,6 +219,20 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
   const news = new NewsRepository(database.db);
   const ruleImports = new RuleImportService(teams, ruleSets, options.ruleExtractor ?? null, now);
 
+  function feedTargetExists(
+    teamId: string,
+    targetType: z.infer<typeof leagueTargetTypeSchema>,
+    targetId: string,
+  ): boolean {
+    if (targetType === 'member_post')
+      return social.listPosts(teamId).some((post) => post.id === targetId);
+    if (targetType === 'ai_post')
+      return options.fanDesk?.posts(teamId).some((post) => post.id === targetId) ?? false;
+    return news
+      .listRecent(100)
+      .some((item) => (JSON.parse(item.newsJson) as { id?: string }).id === targetId);
+  }
+
   await app.register(cors, {
     origin: ['http://127.0.0.1:4317', 'http://localhost:4317'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
@@ -254,6 +280,10 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
     }
     if (message === 'FAN_DESK_DISABLED') {
       void reply.code(409).send({ error: message });
+      return;
+    }
+    if (message === 'LEAGUE_MEMBER_NOT_FOUND') {
+      void reply.code(404).send({ error: message, message: 'League member not found' });
       return;
     }
     if (
@@ -391,6 +421,9 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
       ? strategies.getForTeam(team.id, team.strategyProfileId)
       : null;
     const latestPortalSnapshot = portalSnapshots.latestForTeam(teamId);
+    const latestRoster = latestPortalSnapshot
+      ? portalSnapshotView(latestPortalSnapshot).snapshot.roster
+      : [];
     return {
       team,
       rules: ruleSets.listForTeam(teamId),
@@ -400,6 +433,7 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
       runs: runs.listRecent(teamId),
       fanDesk: options.fanDesk
         ? {
+            configured: options.fanDesk.configured?.(teamId) ?? true,
             profile: options.fanDesk.profile(team),
             posts: options.fanDesk.posts(teamId),
             emails: options.fanDesk.emails(teamId),
@@ -414,7 +448,27 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
         : null,
       members: social.listMembers(teamId),
       leaguePosts: social.listPosts(teamId),
-      news: news.listRecent(12).map((item) => JSON.parse(item.newsJson)),
+      leagueReactions: social.listReactions(teamId),
+      leagueComments: social.listComments(teamId),
+      news: news
+        .listRecent(50)
+        .map((item) => JSON.parse(item.newsJson) as Record<string, unknown>)
+        .map((item, index) => {
+          const text = `${String(item.title ?? '')} ${String(item.summary ?? '')}`.toLowerCase();
+          const relevance = latestRoster.some((player) => {
+            const name = player.name.toLowerCase();
+            const surname = name.split(/\s+/).at(-1) ?? '';
+            return text.includes(name) || (surname.length > 3 && text.includes(surname));
+          });
+          return { item, index, relevance };
+        })
+        .sort(
+          (left, right) =>
+            Number(right.relevance) - Number(left.relevance) || left.index - right.index,
+        )
+        .slice(0, 12)
+        .map(({ item }) => item),
+      newsUpdatedAt: snapshots.latest('rss')?.fetchedAt ?? null,
     };
   });
 
@@ -434,6 +488,41 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
     return await reply
       .code(201)
       .send(social.addPost(teamId, input.memberId, input.body, now().toISOString()));
+  });
+
+  app.post('/api/teams/:teamId/reactions/toggle', async (request, reply) => {
+    const { teamId } = teamParamsSchema.parse(request.params);
+    if (!teams.getById(teamId)) return await reply.code(404).send({ error: 'NOT_FOUND' });
+    const input = leagueReactionInputSchema.parse(request.body);
+    if (!feedTargetExists(teamId, input.targetType, input.targetId))
+      return await reply.code(404).send({ error: 'FEED_ITEM_NOT_FOUND' });
+    return social.toggleReaction(
+      teamId,
+      input.memberId,
+      input.targetType,
+      input.targetId,
+      now().toISOString(),
+    );
+  });
+
+  app.post('/api/teams/:teamId/comments', async (request, reply) => {
+    const { teamId } = teamParamsSchema.parse(request.params);
+    if (!teams.getById(teamId)) return await reply.code(404).send({ error: 'NOT_FOUND' });
+    const input = leagueCommentInputSchema.parse(request.body);
+    if (!feedTargetExists(teamId, input.targetType, input.targetId))
+      return await reply.code(404).send({ error: 'FEED_ITEM_NOT_FOUND' });
+    return await reply
+      .code(201)
+      .send(
+        social.addComment(
+          teamId,
+          input.memberId,
+          input.targetType,
+          input.targetId,
+          input.body,
+          now().toISOString(),
+        ),
+      );
   });
 
   app.get('/api/teams/:teamId/fan-desk', async (request, reply) => {
@@ -626,6 +715,70 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
     }
     const run = await options.scheduler.trigger(teamId, jobType);
     return run ?? (await reply.code(409).send({ error: 'JOB_ALREADY_RUNNING' }));
+  });
+
+  app.post('/api/teams/:teamId/feed/refresh', async (request, reply) => {
+    const { teamId } = teamParamsSchema.parse(request.params);
+    const team = teams.getById(teamId);
+    if (!team) return await reply.code(404).send({ error: 'NOT_FOUND' });
+
+    const step = async (
+      action: (() => Promise<unknown>) | null,
+      unavailable: string,
+      timeoutMs = 15_000,
+    ) => {
+      if (!action) return { status: 'skipped' as const, message: unavailable };
+      try {
+        await new Promise<unknown>((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error('REFRESH_STEP_TIMED_OUT')), timeoutMs);
+          void action().then(
+            (value) => {
+              clearTimeout(timer);
+              resolve(value);
+            },
+            (error: unknown) => {
+              clearTimeout(timer);
+              reject(error instanceof Error ? error : new Error(String(error)));
+            },
+          );
+        });
+        return { status: 'complete' as const, message: null };
+      } catch (error) {
+        return {
+          status: 'needs_attention' as const,
+          message: error instanceof Error ? error.message : String(error),
+        };
+      }
+    };
+
+    const espn = await step(
+      options.espnSnapshots ? async () => await options.espnSnapshots!.sync(team) : null,
+      'ESPN connection is not available',
+    );
+    const newsResult = await step(
+      options.scheduler
+        ? async () => {
+            const run = await options.scheduler!.trigger(teamId, 'news_refresh');
+            if (!run) throw new Error('NEWS_REFRESH_ALREADY_RUNNING');
+          }
+        : null,
+      'News refresh is not available',
+    );
+    const commentary = await step(
+      options.fanDesk?.configured?.(teamId)
+        ? async () => await options.fanDesk!.generate(team)
+        : null,
+      'Choose an AI personality to enable commentary',
+      45_000,
+    );
+    const steps = { espn, news: newsResult, commentary };
+    return {
+      status: Object.values(steps).some((result) => result.status === 'needs_attention')
+        ? 'partial'
+        : 'complete',
+      steps,
+      refreshedAt: now().toISOString(),
+    };
   });
 
   if (options.webRoot) {

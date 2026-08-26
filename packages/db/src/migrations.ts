@@ -322,6 +322,33 @@ const migrations = [
       CREATE INDEX league_posts_team_created_idx ON league_posts(team_id, created_at DESC);
     `,
   },
+  {
+    version: 9,
+    sql: `
+      CREATE TABLE league_reactions (
+        id TEXT PRIMARY KEY,
+        team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+        member_id TEXT NOT NULL REFERENCES league_members(id) ON DELETE CASCADE,
+        target_type TEXT NOT NULL CHECK (target_type IN ('member_post', 'ai_post', 'news')),
+        target_id TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        UNIQUE (team_id, member_id, target_type, target_id)
+      );
+      CREATE INDEX league_reactions_team_target_idx
+        ON league_reactions(team_id, target_type, target_id);
+      CREATE TABLE league_comments (
+        id TEXT PRIMARY KEY,
+        team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+        member_id TEXT NOT NULL REFERENCES league_members(id) ON DELETE CASCADE,
+        target_type TEXT NOT NULL CHECK (target_type IN ('member_post', 'ai_post', 'news')),
+        target_id TEXT NOT NULL,
+        body TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX league_comments_team_target_idx
+        ON league_comments(team_id, target_type, target_id);
+    `,
+  },
 ] as const;
 
 export function applyMigrations(database: Database.Database): void {

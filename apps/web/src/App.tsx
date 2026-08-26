@@ -51,6 +51,7 @@ import type {
   AutomationPolicy,
   Bootstrap,
   CreateTeamInput,
+  LeagueTargetType,
   Recommendation,
   RuleImportResult,
   TeamDetail,
@@ -274,7 +275,10 @@ export function App() {
     selectedDetail?.team ??
     bootstrap?.teams.find((candidate) => candidate.id === selectedTeamId) ??
     null;
-  const accentStyle = { '--team-accent': team?.color ?? '#b9f55b' } as CSSProperties;
+  const teamColor = team?.color ?? '#5d7b62';
+  const accentStyle = {
+    '--team-accent': `color-mix(in srgb, ${teamColor} 45%, #405447)`,
+  } as CSSProperties;
   const teamSchedules = useMemo(
     () => bootstrap?.schedules.filter((entry) => entry.teamId === selectedTeamId) ?? [],
     [bootstrap?.schedules, selectedTeamId],
@@ -306,6 +310,7 @@ export function App() {
       `${input.name} is ready for onboarding`,
     );
     if (!created) return;
+    await api.runJob(created.id, 'news_refresh').catch(() => null);
     await refreshBootstrap(created.id);
     await refreshTeam(created.id);
     setShowCreate(false);
@@ -460,6 +465,54 @@ export function App() {
     if (completed) await refreshTeam(team.id);
   }
 
+  async function toggleLeagueReaction(
+    memberId: string,
+    targetType: Parameters<typeof api.toggleLeagueReaction>[2],
+    targetId: string,
+  ) {
+    if (!team) return;
+    const completed = await perform(
+      `reaction:${targetId}`,
+      () => api.toggleLeagueReaction(team.id, memberId, targetType, targetId),
+      'Reaction updated',
+    );
+    if (completed) await refreshTeam(team.id);
+  }
+
+  async function createLeagueComment(
+    memberId: string,
+    targetType: Parameters<typeof api.createLeagueComment>[2],
+    targetId: string,
+    body: string,
+  ) {
+    if (!team) return;
+    const completed = await perform(
+      `comment:${targetId}`,
+      () => api.createLeagueComment(team.id, memberId, targetType, targetId, body),
+      'Comment added',
+    );
+    if (completed) await refreshTeam(team.id);
+  }
+
+  async function refreshFeed() {
+    if (!team) return;
+    const completed = await perform(
+      'feed-refresh',
+      () => api.refreshFeed(team.id),
+      'League feed checked for updates',
+    );
+    if (!completed) return;
+    const attention = Object.entries(completed.steps)
+      .filter(([, result]) => result.status === 'needs_attention')
+      .map(([name]) => name);
+    setNotice(
+      attention.length > 0
+        ? `Feed refreshed; ${attention.join(' and ')} need attention`
+        : 'League feed is up to date',
+    );
+    await Promise.all([refreshTeam(team.id), refreshBootstrap(team.id)]);
+  }
+
   async function addMember(displayName: string) {
     if (!team) return;
     const completed = await perform(
@@ -504,8 +557,8 @@ export function App() {
             <p className="kicker">THREE MINUTES TO KICKOFF</p>
             <h1>Connect your fantasy league.</h1>
             <p>
-              Add your league, choose the AI personality, and invite your group. League moves and
-              live football news become one shared conversation.
+              Add your league and choose its AI personality. League moves, local conversation, and
+              football news come together on one front page.
             </p>
             <div className="welcome-signals">
               <span>
@@ -515,7 +568,7 @@ export function App() {
                 <Bot size={17} /> Your AI host
               </span>
               <span>
-                <Users size={17} /> One place for everyone
+                <Users size={17} /> Local member profiles
               </span>
             </div>
           </div>
@@ -622,8 +675,10 @@ export function App() {
               <LeagueFeed
                 detail={selectedDetail}
                 busy={busy}
-                onGenerate={generateFanDesk}
+                onRefresh={refreshFeed}
                 onPost={createLeaguePost}
+                onReact={toggleLeagueReaction}
+                onComment={createLeagueComment}
                 onNavigate={setTab}
               />
             ) : null}
@@ -638,12 +693,7 @@ export function App() {
               />
             ) : null}
             {tab === 'members' ? (
-              <MembersPanel
-                team={team}
-                members={selectedDetail.members ?? []}
-                busy={busy}
-                onAdd={addMember}
-              />
+              <MembersPanel members={selectedDetail.members ?? []} busy={busy} onAdd={addMember} />
             ) : null}
             {tab === 'archive' ? <ArchivePanel onNavigate={setTab} /> : null}
             {tab === 'command' ? (
@@ -782,22 +832,35 @@ export function App() {
 function LeagueFeed({
   detail,
   busy,
-  onGenerate,
+  onRefresh,
   onPost,
+  onReact,
+  onComment,
   onNavigate,
 }: {
   detail: TeamDetail;
   busy: string | null;
-  onGenerate: () => Promise<void>;
+  onRefresh: () => Promise<void>;
   onPost: (memberId: string, body: string) => Promise<void>;
+  onReact: (memberId: string, targetType: LeagueTargetType, targetId: string) => Promise<void>;
+  onComment: (
+    memberId: string,
+    targetType: LeagueTargetType,
+    targetId: string,
+    body: string,
+  ) => Promise<void>;
   onNavigate: (tab: Tab) => void;
 }) {
   const aiPosts = detail.fanDesk?.posts ?? [];
   const [draft, setDraft] = useState('');
   const [filter, setFilter] = useState<'all' | 'league' | 'news'>('all');
-  const [liked, setLiked] = useState<Record<string, boolean>>({});
-  const currentMember = detail.members?.[0];
+  const [memberId, setMemberId] = useState(detail.members?.[0]?.id ?? '');
+  const currentMember =
+    detail.members?.find((member) => member.id === memberId) ?? detail.members?.[0];
   const feedNews = filter === 'news' ? (detail.news ?? []) : (detail.news ?? []).slice(0, 4);
+  const newsFreshness = detail.newsUpdatedAt
+    ? `Updated ${formatDate(detail.newsUpdatedAt)}`
+    : 'News not connected';
   const items = [
     ...(detail.leaguePosts ?? []).map((post) => ({
       type: 'member' as const,
@@ -843,19 +906,20 @@ function LeagueFeed({
             </div>
           </div>
           <p className="masthead-dek">
-            League moves, sharp takes, and football news—reported live.
+            League moves, sharp takes, and football news—as your sources update.
           </p>
         </article>
 
         <div className="league-score-strip" aria-label="League activity summary">
           <span>
-            <b>{(detail.members ?? []).length}</b> Members
+            <b>{(detail.members ?? []).length}</b>{' '}
+            {(detail.members ?? []).length === 1 ? 'Member' : 'Members'}
           </span>
           <span>
             <b>{(detail.leaguePosts ?? []).length + aiPosts.length}</b> League dispatches
           </span>
           <span>
-            <i /> Live news desk
+            <i className={detail.newsUpdatedAt ? '' : 'offline'} /> {newsFreshness}
           </span>
         </div>
 
@@ -874,8 +938,23 @@ function LeagueFeed({
         </div>
 
         <form className="league-composer" onSubmit={(event) => void submitPost(event)}>
-          <div className="member-avatar">
-            {currentMember?.displayName.slice(0, 1).toUpperCase() ?? '?'}
+          <div className="composer-identity">
+            <div className="member-avatar">
+              {currentMember?.displayName.slice(0, 1).toUpperCase() ?? '?'}
+            </div>
+            {detail.members && detail.members.length > 1 ? (
+              <select
+                aria-label="Post as"
+                value={currentMember?.id ?? ''}
+                onChange={(event) => setMemberId(event.target.value)}
+              >
+                {detail.members.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.displayName}
+                  </option>
+                ))}
+              </select>
+            ) : null}
           </div>
           <label>
             <span className="sr-only">Post to your league</span>
@@ -899,10 +978,15 @@ function LeagueFeed({
                 ? 'From the league'
                 : 'Top stories'}
           </span>
-          <small>Updated live</small>
+          <div>
+            <small>{newsFreshness}</small>
+            <button type="button" disabled={Boolean(busy)} onClick={() => void onRefresh()}>
+              <RefreshCw size={12} /> {busy === 'feed-refresh' ? 'Checking…' : 'Check sources'}
+            </button>
+          </div>
         </div>
 
-        {items.length === 0 && !detail.fanDesk ? (
+        {items.length === 0 && !detail.fanDesk?.configured ? (
           <article className="feed-empty">
             <Sparkles size={28} />
             <h3>Give your league a voice</h3>
@@ -930,10 +1014,14 @@ function LeagueFeed({
                   </div>
                   <p>{item.post.body}</p>
                   <PostActions
-                    id={item.post.id}
-                    liked={liked}
-                    setLiked={setLiked}
-                    onReply={() => setDraft(`@${item.post.authorName} `)}
+                    targetId={item.post.id}
+                    targetType="member_post"
+                    member={currentMember}
+                    reactions={detail.leagueReactions ?? []}
+                    comments={detail.leagueComments ?? []}
+                    busy={busy}
+                    onReact={onReact}
+                    onComment={onComment}
                   />
                 </div>
               </article>
@@ -952,16 +1040,20 @@ function LeagueFeed({
                 <h3>{item.post.title}</h3>
                 {item.post.summary ? <p>{item.post.summary}</p> : null}
                 <div className="news-footer">
-                  <button
-                    type="button"
-                    onClick={() => setDraft(`What does “${item.post.title}” mean for our league? `)}
-                  >
-                    <MessageCircle size={13} /> Discuss this
-                  </button>
                   <a href={item.post.url} target="_blank" rel="noreferrer">
                     Read source <ExternalLink size={13} />
                   </a>
                 </div>
+                <PostActions
+                  targetId={item.post.id}
+                  targetType="news"
+                  member={currentMember}
+                  reactions={detail.leagueReactions ?? []}
+                  comments={detail.leagueComments ?? []}
+                  busy={busy}
+                  onReact={onReact}
+                  onComment={onComment}
+                />
               </article>
             );
           return (
@@ -986,17 +1078,21 @@ function LeagueFeed({
                   {item.post.evidence.length === 1 ? '' : 's'}
                 </div>
                 <PostActions
-                  id={item.post.id}
-                  liked={liked}
-                  setLiked={setLiked}
-                  onReply={() => setDraft(`@${detail.fanDesk?.profile.name ?? 'League AI'} `)}
+                  targetId={item.post.id}
+                  targetType="ai_post"
+                  member={currentMember}
+                  reactions={detail.leagueReactions ?? []}
+                  comments={detail.leagueComments ?? []}
+                  busy={busy}
+                  onReact={onReact}
+                  onComment={onComment}
                 />
               </div>
             </article>
           );
         })}
 
-        {items.length === 0 && detail.fanDesk ? (
+        {items.length === 0 && detail.fanDesk?.configured ? (
           <article className="feed-empty">
             <Activity size={28} />
             <h3>Your league is quiet—for now</h3>
@@ -1004,9 +1100,9 @@ function LeagueFeed({
             <button
               className="ghost-button"
               disabled={Boolean(busy)}
-              onClick={() => void onGenerate()}
+              onClick={() => void onRefresh()}
             >
-              <Sparkles size={15} /> {busy === 'fan-generate' ? 'Checking…' : 'Check for updates'}
+              <Sparkles size={15} /> {busy === 'feed-refresh' ? 'Checking…' : 'Check for updates'}
             </button>
           </article>
         ) : null}
@@ -1031,7 +1127,7 @@ function LeagueFeed({
           </span>
         </div>
         <button type="button" onClick={() => onNavigate('members')}>
-          <UserPlus size={15} /> Invite league members
+          <UserPlus size={15} /> Manage league members
         </button>
         <div className="rail-news">
           <p className="kicker">TRENDING NOW</p>
@@ -1049,27 +1145,103 @@ function LeagueFeed({
 }
 
 function PostActions({
-  id,
-  liked,
-  setLiked,
-  onReply,
+  targetId,
+  targetType,
+  member,
+  reactions,
+  comments,
+  busy,
+  onReact,
+  onComment,
 }: {
-  id: string;
-  liked: Record<string, boolean>;
-  setLiked: (value: Record<string, boolean>) => void;
-  onReply: () => void;
+  targetId: string;
+  targetType: LeagueTargetType;
+  member: NonNullable<TeamDetail['members']>[number] | undefined;
+  reactions: NonNullable<TeamDetail['leagueReactions']>;
+  comments: NonNullable<TeamDetail['leagueComments']>;
+  busy: string | null;
+  onReact: (memberId: string, targetType: LeagueTargetType, targetId: string) => Promise<void>;
+  onComment: (
+    memberId: string,
+    targetType: LeagueTargetType,
+    targetId: string,
+    body: string,
+  ) => Promise<void>;
 }) {
+  const [replying, setReplying] = useState(false);
+  const [comment, setComment] = useState('');
+  const targetReactions = reactions.filter(
+    (reaction) => reaction.targetType === targetType && reaction.targetId === targetId,
+  );
+  const targetComments = comments
+    .filter((entry) => entry.targetType === targetType && entry.targetId === targetId)
+    .toReversed();
+  const liked = Boolean(
+    member && targetReactions.some((reaction) => reaction.memberId === member.id),
+  );
+
+  async function submitComment(event: FormEvent) {
+    event.preventDefault();
+    if (!member || !comment.trim()) return;
+    await onComment(member.id, targetType, targetId, comment.trim());
+    setComment('');
+    setReplying(false);
+  }
+
   return (
-    <div className="post-actions">
-      <button
-        className={liked[id] ? 'liked' : ''}
-        onClick={() => setLiked({ ...liked, [id]: !liked[id] })}
-      >
-        <Heart size={15} fill={liked[id] ? 'currentColor' : 'none'} /> {liked[id] ? '1' : 'Like'}
-      </button>
-      <button onClick={onReply}>
-        <MessageCircle size={15} /> Comment
-      </button>
+    <div className="post-conversation">
+      <div className="post-actions">
+        <button
+          type="button"
+          className={liked ? 'liked' : ''}
+          aria-label={
+            targetReactions.length
+              ? `${liked ? 'Unlike' : 'Like'} (${targetReactions.length} reaction${targetReactions.length === 1 ? '' : 's'})`
+              : undefined
+          }
+          disabled={!member || Boolean(busy)}
+          onClick={() => member && void onReact(member.id, targetType, targetId)}
+        >
+          <Heart size={15} fill={liked ? 'currentColor' : 'none'} />{' '}
+          {targetReactions.length || 'Like'}
+        </button>
+        <button
+          type="button"
+          disabled={!member}
+          aria-label={
+            targetComments.length
+              ? `Comment (${targetComments.length} comment${targetComments.length === 1 ? '' : 's'})`
+              : undefined
+          }
+          onClick={() => setReplying(!replying)}
+        >
+          <MessageCircle size={15} /> {targetComments.length || 'Comment'}
+        </button>
+      </div>
+      {targetComments.length > 0 ? (
+        <div className="comment-thread">
+          {targetComments.map((entry) => (
+            <p key={entry.id}>
+              <b>{entry.authorName}</b> {entry.body}
+            </p>
+          ))}
+        </div>
+      ) : null}
+      {replying ? (
+        <form className="inline-comment" onSubmit={(event) => void submitComment(event)}>
+          <input
+            autoFocus
+            aria-label="Write a comment"
+            maxLength={500}
+            value={comment}
+            placeholder="Add to the conversation…"
+            onChange={(event) => setComment(event.target.value)}
+          />
+          <button type="submit" disabled={!comment.trim() || Boolean(busy)}>
+            Reply
+          </button>
+        </form>
+      ) : null}
     </div>
   );
 }
@@ -1091,7 +1263,7 @@ function SimpleSetup({
 }) {
   const steps = [
     Boolean(detail.espnSnapshot),
-    Boolean(detail.fanDesk),
+    Boolean(detail.fanDesk?.configured),
     Boolean(bootstrap.data.rss),
   ];
   return (
@@ -1152,23 +1324,15 @@ function SimpleSetup({
 }
 
 function MembersPanel({
-  team,
   members,
   busy,
   onAdd,
 }: {
-  team: TeamDetail['team'];
   members: NonNullable<TeamDetail['members']>;
   busy: string | null;
   onAdd: (name: string) => Promise<void>;
 }) {
-  const [copied, setCopied] = useState(false);
   const [name, setName] = useState('');
-  const invite = `${window.location.origin}/join/${team.id}`;
-  async function copyInvite() {
-    await navigator.clipboard?.writeText(invite);
-    setCopied(true);
-  }
   async function submitMember(event: FormEvent) {
     event.preventDefault();
     if (!name.trim()) return;
@@ -1180,18 +1344,21 @@ function MembersPanel({
       <div className="section-heading">
         <div>
           <p className="kicker">BETTER WITH RIVALS</p>
-          <h2>Invite your league</h2>
-          <p>Share one link. Members join the same feed and conversation.</p>
+          <h2>Your league members</h2>
+          <p>
+            Add local profiles for shared-device testing. Secure invitations arrive with hosted
+            identity.
+          </p>
         </div>
         <UserPlus size={32} />
       </div>
       <article className="invite-card">
         <div>
-          <small>PRIVATE INVITE LINK</small>
-          <code>{invite}</code>
+          <small>HOSTED INVITATIONS</small>
+          <b>Not available in this private local preview</b>
         </div>
-        <button className="primary-button" type="button" onClick={() => void copyInvite()}>
-          {copied ? 'Copied!' : 'Copy invite link'}
+        <button className="primary-button" type="button" disabled>
+          Invite link coming next
         </button>
       </article>
       <form className="member-add-form" onSubmit={(event) => void submitMember(event)}>
@@ -1220,8 +1387,8 @@ function MembersPanel({
         ))}
       </div>
       <p className="quiet-note">
-        The invite URL is ready for the hosted identity layer. Local member profiles are available
-        now for shared-device testing.
+        No shareable URL is issued until authentication, authorization, and expiring invitation
+        tokens are enabled.
       </p>
     </section>
   );
@@ -1564,7 +1731,7 @@ function RosterPanel({
           <div className="snapshot-banner">
             <ShieldCheck size={18} />
             <span>
-              <b>Digest verified</b>
+              <b>Roster snapshot</b>
               <small>
                 League {portal.leagueId} · Team {portal.platformTeamId} ·{' '}
                 {formatDate(portal.observedAt)}
