@@ -89,13 +89,13 @@ describe('application shell', () => {
     render(<App />);
 
     expect(
-      await screen.findByRole('heading', { name: 'Build your first front office.' }),
+      await screen.findByRole('heading', { name: 'Connect your fantasy league.' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Create team/ })).toBeInTheDocument();
     expect(screen.getByText(/starts local, independent/)).toBeInTheDocument();
   });
 
-  it('loads an independent team command center and all action workspaces', async () => {
+  it('loads the distilled league experience and keeps advanced tools archived', async () => {
     const configuredTeam = team();
     const fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
@@ -107,18 +107,22 @@ describe('application shell', () => {
 
     render(<App />);
 
-    expect(
-      await screen.findByRole('heading', { name: 'Finish the setup. Then attack the week.' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: configuredTeam.name })).toBeInTheDocument();
     expect(screen.getByLabelText('ACTIVE TEAM')).toHaveValue(configuredTeam.id);
-    fireEvent.click(screen.getByRole('button', { name: 'League rules' }));
+    expect(screen.getByRole('button', { name: 'AI setup' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Members' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Archive' }));
+    fireEvent.click(screen.getByRole('button', { name: /League rules/ }));
     expect(screen.getByRole('heading', { name: 'Rules laboratory' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Trade desk' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Archive' }));
+    fireEvent.click(screen.getByRole('button', { name: /Trade desk/ }));
     expect(screen.getByRole('heading', { level: 2, name: 'Trade desk' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Fan desk' }));
+    fireEvent.click(screen.getByRole('button', { name: 'AI setup' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose personality' }));
     expect(screen.getByRole('heading', { level: 2, name: 'Fan desk' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Generate bulletin/ })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Agent network' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Archive' }));
+    fireEvent.click(screen.getByRole('button', { name: /Agent network/ }));
     expect(screen.getByRole('heading', { level: 1, name: 'Agent network' })).toBeInTheDocument();
   });
 
@@ -133,9 +137,10 @@ describe('application shell', () => {
       ),
     );
     render(<App />);
-    await screen.findByRole('heading', { name: 'Finish the setup. Then attack the week.' });
+    await screen.findByRole('heading', { name: configuredTeam.name });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Automation' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Archive' }));
+    fireEvent.click(screen.getByRole('button', { name: /Automation/ }));
     fireEvent.click(screen.getByRole('checkbox', { name: 'Arm ESPN actions' }));
     const save = screen.getByRole('button', { name: /Save safety policy/ });
     expect(save).toBeDisabled();
@@ -162,7 +167,7 @@ describe('application shell', () => {
     });
     vi.stubGlobal('fetch', fetch);
     render(<App />);
-    await screen.findByRole('heading', { name: 'Build your first front office.' });
+    await screen.findByRole('heading', { name: 'Connect your fantasy league.' });
 
     fireEvent.change(screen.getByLabelText('Team name'), {
       target: { value: configuredTeam.name },
@@ -179,7 +184,7 @@ describe('application shell', () => {
       expect(fetch).toHaveBeenCalledWith('/api/teams', expect.objectContaining({ method: 'POST' })),
     );
     expect(
-      await screen.findByRole('heading', { name: 'Finish the setup. Then attack the week.' }),
+      await screen.findByRole('heading', { name: 'Set up your league AI' }),
     ).toBeInTheDocument();
   });
 
@@ -237,6 +242,8 @@ describe('application shell', () => {
     vi.stubGlobal('confirm', confirm);
     render(<App />);
 
+    fireEvent.click(await screen.findByRole('button', { name: 'Archive' }));
+    fireEvent.click(screen.getByRole('button', { name: /Manager dashboard/ }));
     fireEvent.click(await screen.findByRole('button', { name: 'Execute on ESPN' }));
 
     expect(confirm).toHaveBeenCalledWith(expect.stringContaining('Start Breakout Runner'));

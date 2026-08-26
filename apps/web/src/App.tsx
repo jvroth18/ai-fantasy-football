@@ -1,17 +1,19 @@
 import {
   Activity,
+  Archive,
   Bot,
   CalendarClock,
   Check,
   ChevronDown,
   Database,
   FileText,
-  Mic2,
+  Home,
   Network,
   LayoutDashboard,
   ListPlus,
   LoaderCircle,
   Plus,
+  Send,
   RefreshCw,
   Scale,
   Settings2,
@@ -19,6 +21,7 @@ import {
   Sparkles,
   Target,
   Trophy,
+  UserPlus,
   Users,
   X,
 } from 'lucide-react';
@@ -43,6 +46,10 @@ import type {
 } from './types.js';
 
 type Tab =
+  | 'feed'
+  | 'setup'
+  | 'members'
+  | 'archive'
   | 'command'
   | 'draft'
   | 'roster'
@@ -56,18 +63,29 @@ type Tab =
   | 'network';
 
 const navigation: Array<{ id: Tab; label: string; icon: LucideIcon }> = [
-  { id: 'command', label: 'Command center', icon: LayoutDashboard },
-  { id: 'fan', label: 'Fan desk', icon: Mic2 },
-  { id: 'network', label: 'Agent network', icon: Network },
-  { id: 'draft', label: 'Draft room', icon: Trophy },
-  { id: 'roster', label: 'Roster', icon: Users },
-  { id: 'players', label: 'Player rankings', icon: Database },
-  { id: 'waivers', label: 'Waivers', icon: ListPlus },
-  { id: 'trades', label: 'Trade desk', icon: Scale },
-  { id: 'rules', label: 'League rules', icon: FileText },
-  { id: 'strategy', label: 'Strategy', icon: Target },
-  { id: 'automation', label: 'Automation', icon: ShieldCheck },
+  { id: 'feed', label: 'League feed', icon: Home },
+  { id: 'setup', label: 'AI setup', icon: Sparkles },
+  { id: 'members', label: 'Members', icon: Users },
+  { id: 'archive', label: 'Archive', icon: Archive },
 ];
+
+const tabLabels: Record<Tab, string> = {
+  feed: 'League feed',
+  setup: 'AI setup',
+  members: 'Members',
+  archive: 'Archive',
+  command: 'Command center',
+  draft: 'Draft room',
+  roster: 'Roster',
+  players: 'Player rankings',
+  waivers: 'Waivers',
+  trades: 'Trade desk',
+  rules: 'League rules',
+  strategy: 'Strategy',
+  automation: 'Automation',
+  fan: 'Fan desk',
+  network: 'Agent network',
+};
 
 const jobNames: Record<string, string> = {
   news_refresh: 'News refresh',
@@ -181,7 +199,7 @@ export function App() {
   const [bootstrap, setBootstrap] = useState<Bootstrap | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [detail, setDetail] = useState<TeamDetail | null>(null);
-  const [tab, setTab] = useState<Tab>('command');
+  const [tab, setTab] = useState<Tab>('feed');
   const [showCreate, setShowCreate] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
@@ -280,7 +298,7 @@ export function App() {
     await refreshBootstrap(created.id);
     await refreshTeam(created.id);
     setShowCreate(false);
-    setTab('command');
+    setTab('setup');
   }
 
   async function runJob(jobType: string) {
@@ -446,32 +464,32 @@ export function App() {
         <header className="welcome-brand">
           <span>FF</span>
           <div>
-            <p className="kicker">LOCAL FANTASY OPERATIONS</p>
-            <b>Front Office AI</b>
+            <p className="kicker">YOUR LEAGUE, ALIVE</p>
+            <b>League House</b>
           </div>
         </header>
         <section className="welcome-grid">
           <div className="welcome-copy">
-            <p className="kicker">THE SEASON STARTS WITH CONTEXT</p>
-            <h1>Build your first front office.</h1>
+            <p className="kicker">THREE MINUTES TO KICKOFF</p>
+            <h1>Connect your fantasy league.</h1>
             <p>
-              Create an isolated team workspace, then teach it your league rules, strategy, and ESPN
-              binding. Recommendations remain grounded in each team’s mechanics.
+              Add your league, choose the AI personality, and invite your group. League moves and
+              live football news become one shared conversation.
             </p>
             <div className="welcome-signals">
               <span>
-                <Database size={17} /> Free football data
+                <Database size={17} /> Live league activity
               </span>
               <span>
-                <Bot size={17} /> Codex decisions
+                <Bot size={17} /> Your AI host
               </span>
               <span>
-                <ShieldCheck size={17} /> Guarded execution
+                <Users size={17} /> One place for everyone
               </span>
             </div>
           </div>
           <div className="welcome-form-card">
-            <p className="step-label">01 / TEAM IDENTITY</p>
+            <p className="step-label">01 / CONNECT ESPN</p>
             <CreateTeamForm onCreate={createTeam} busy={busy === 'create-team'} />
           </div>
         </section>
@@ -486,8 +504,8 @@ export function App() {
         <div className="brand">
           <span>FF</span>
           <div>
-            <p className="kicker">FRONT OFFICE</p>
-            <b>AI Manager</b>
+            <p className="kicker">FANTASY SOCIAL</p>
+            <b>League House</b>
           </div>
         </div>
         <div className="team-switcher">
@@ -499,7 +517,7 @@ export function App() {
               value={selectedTeamId ?? ''}
               onChange={(event) => {
                 setSelectedTeamId(event.target.value);
-                setTab('command');
+                setTab('feed');
               }}
             >
               {bootstrap.teams.map((candidate) => (
@@ -524,7 +542,6 @@ export function App() {
             >
               <Icon size={18} />
               <span>{label}</span>
-              {id === 'automation' && team?.automation.armed ? <i className="armed-dot" /> : null}
             </button>
           ))}
         </nav>
@@ -543,7 +560,7 @@ export function App() {
             <p className="kicker">
               {team?.season} · ESPN {team?.espnLeagueId}
             </p>
-            <h1>{navigation.find((item) => item.id === tab)?.label}</h1>
+            <h1>{tabLabels[tab]}</h1>
           </div>
           <div className="header-actions">
             <button
@@ -570,6 +587,26 @@ export function App() {
           </div>
         ) : (
           <>
+            {tab === 'feed' ? (
+              <LeagueFeed
+                detail={selectedDetail}
+                busy={busy}
+                onGenerate={generateFanDesk}
+                onNavigate={setTab}
+              />
+            ) : null}
+            {tab === 'setup' ? (
+              <SimpleSetup
+                detail={selectedDetail}
+                bootstrap={bootstrap}
+                busy={busy}
+                onSync={syncEspn}
+                onRun={runJob}
+                onNavigate={setTab}
+              />
+            ) : null}
+            {tab === 'members' ? <MembersPanel team={team} /> : null}
+            {tab === 'archive' ? <ArchivePanel onNavigate={setTab} /> : null}
             {tab === 'command' ? (
               <CommandCenter
                 detail={selectedDetail}
@@ -700,6 +737,260 @@ export function App() {
         </div>
       ) : null}
     </div>
+  );
+}
+
+function LeagueFeed({
+  detail,
+  busy,
+  onGenerate,
+  onNavigate,
+}: {
+  detail: TeamDetail;
+  busy: string | null;
+  onGenerate: () => Promise<void>;
+  onNavigate: (tab: Tab) => void;
+}) {
+  const posts = detail.fanDesk?.posts ?? [];
+  return (
+    <section className="social-layout">
+      <div className="feed-column">
+        <article className="feed-welcome">
+          <div className="league-avatar">{detail.team.name.slice(0, 2).toUpperCase()}</div>
+          <div>
+            <p className="kicker">WELCOME TO THE LEAGUE HOUSE</p>
+            <h2>{detail.team.name}</h2>
+            <p>Moves, matchups, news, and league talk—together in one timeline.</p>
+          </div>
+        </article>
+
+        {!detail.fanDesk ? (
+          <article className="feed-empty">
+            <Sparkles size={28} />
+            <h3>Give your league a voice</h3>
+            <p>
+              Choose an AI personality and it will turn real league activity into posts worth
+              reacting to.
+            </p>
+            <button className="primary-button" type="button" onClick={() => onNavigate('setup')}>
+              Set up the AI
+            </button>
+          </article>
+        ) : (
+          <>
+            <div className="feed-toolbar">
+              <div>
+                <b>For your league</b>
+                <small>{posts.length} posts</small>
+              </div>
+              <button
+                className="ghost-button"
+                type="button"
+                disabled={Boolean(busy)}
+                onClick={() => void onGenerate()}
+              >
+                <Sparkles size={15} /> {busy === 'fan-generate' ? 'Checking…' : 'Check for updates'}
+              </button>
+            </div>
+            {posts.length === 0 ? (
+              <article className="feed-empty">
+                <Activity size={28} />
+                <h3>The timeline is ready</h3>
+                <p>Sync ESPN or check for updates to publish the first league story.</p>
+              </article>
+            ) : (
+              posts.map((post) => (
+                <article className="social-post" key={post.id}>
+                  <div className="post-avatar">
+                    <Bot size={18} />
+                  </div>
+                  <div className="post-content">
+                    <div className="post-byline">
+                      <b>{detail.fanDesk?.profile.name}</b>
+                      <span>AI host</span>
+                      <time>{formatDate(post.createdAt)}</time>
+                    </div>
+                    <p className="post-kind">{post.kind.replaceAll('_', ' ')}</p>
+                    <h3>{post.headline}</h3>
+                    <p>{post.dek}</p>
+                    <div className="post-proof">
+                      <ShieldCheck size={13} /> Based on {post.evidence.length} verified source
+                      {post.evidence.length === 1 ? '' : 's'}
+                    </div>
+                  </div>
+                </article>
+              ))
+            )}
+          </>
+        )}
+      </div>
+      <aside className="league-rail">
+        <p className="kicker">LEAGUE PULSE</p>
+        <h3>What shows up here</h3>
+        <ul>
+          <li>Roster and waiver moves</li>
+          <li>Matchup moments</li>
+          <li>Trades and standings</li>
+          <li>Player news that matters</li>
+        </ul>
+        <button type="button" onClick={() => onNavigate('members')}>
+          <UserPlus size={15} /> Invite league members
+        </button>
+      </aside>
+    </section>
+  );
+}
+
+function SimpleSetup({
+  detail,
+  bootstrap,
+  busy,
+  onSync,
+  onRun,
+  onNavigate,
+}: {
+  detail: TeamDetail;
+  bootstrap: Bootstrap;
+  busy: string | null;
+  onSync: () => Promise<void>;
+  onRun: (job: string) => Promise<void>;
+  onNavigate: (tab: Tab) => void;
+}) {
+  const steps = [
+    Boolean(detail.espnSnapshot),
+    Boolean(detail.fanDesk),
+    Boolean(bootstrap.data.rss),
+  ];
+  return (
+    <section className="simple-setup content-stack">
+      <div className="section-heading">
+        <div>
+          <p className="kicker">KEEP IT SIMPLE</p>
+          <h2>Set up your league AI</h2>
+          <p>Three choices get the experience running. Everything else can wait.</p>
+        </div>
+        <Sparkles size={32} />
+      </div>
+      <div className="setup-steps">
+        <article className={steps[0] ? 'complete' : ''}>
+          <span>1</span>
+          <div>
+            <h3>Connect league activity</h3>
+            <p>Read the current ESPN league and roster from your signed-in browser.</p>
+          </div>
+          <button className="ghost-button" disabled={Boolean(busy)} onClick={() => void onSync()}>
+            {steps[0] ? 'Sync again' : 'Connect ESPN'}
+          </button>
+        </article>
+        <article className={steps[1] ? 'complete' : ''}>
+          <span>2</span>
+          <div>
+            <h3>Choose the AI personality</h3>
+            <p>Pick the name, voice, energy, and posting rhythm for your league host.</p>
+          </div>
+          <button className="ghost-button" onClick={() => onNavigate('fan')}>
+            {steps[1] ? 'Edit personality' : 'Choose personality'}
+          </button>
+        </article>
+        <article className={steps[2] ? 'complete' : ''}>
+          <span>3</span>
+          <div>
+            <h3>Add live football news</h3>
+            <p>Pull in relevant public news so league events have useful context.</p>
+          </div>
+          <button
+            className="ghost-button"
+            disabled={Boolean(busy)}
+            onClick={() => void onRun('news_refresh')}
+          >
+            {steps[2] ? 'Refresh news' : 'Add news'}
+          </button>
+        </article>
+      </div>
+      <button
+        className="primary-button align-self"
+        type="button"
+        onClick={() => onNavigate('feed')}
+      >
+        Go to league feed <Send size={16} />
+      </button>
+    </section>
+  );
+}
+
+function MembersPanel({ team }: { team: TeamDetail['team'] }) {
+  const [copied, setCopied] = useState(false);
+  const invite = `${window.location.origin}/join/${team.id}`;
+  async function copyInvite() {
+    await navigator.clipboard?.writeText(invite);
+    setCopied(true);
+  }
+  return (
+    <section className="members-shell content-stack">
+      <div className="section-heading">
+        <div>
+          <p className="kicker">BETTER WITH RIVALS</p>
+          <h2>Invite your league</h2>
+          <p>Share one link. Members join the same feed and conversation.</p>
+        </div>
+        <UserPlus size={32} />
+      </div>
+      <article className="invite-card">
+        <div>
+          <small>PRIVATE INVITE LINK</small>
+          <code>{invite}</code>
+        </div>
+        <button className="primary-button" type="button" onClick={() => void copyInvite()}>
+          {copied ? 'Copied!' : 'Copy invite link'}
+        </button>
+      </article>
+      <div className="empty-panel tall">
+        <Users size={28} />
+        <h3>Your league members will appear here</h3>
+        <p>Invites are currently a local preview while shared accounts are being connected.</p>
+      </div>
+    </section>
+  );
+}
+
+function ArchivePanel({ onNavigate }: { onNavigate: (tab: Tab) => void }) {
+  const tools: Array<[Tab, string, string, LucideIcon]> = [
+    ['command', 'Manager dashboard', 'Readiness, schedules, and recommendations', LayoutDashboard],
+    ['roster', 'Roster', 'Verified ESPN roster state', Users],
+    ['players', 'Player intelligence', 'Rankings and source-backed dossiers', Database],
+    ['draft', 'Draft room', 'Draft recommendations', Trophy],
+    ['waivers', 'Waivers', 'Adds, drops, and FAAB planning', ListPlus],
+    ['trades', 'Trade desk', 'Roster-fit trade ideas', Scale],
+    ['rules', 'League rules', 'Detailed scoring and roster settings', FileText],
+    ['strategy', 'Strategy', 'Risk and roster preferences', Target],
+    ['automation', 'Automation', 'Guarded ESPN actions', ShieldCheck],
+    ['network', 'Agent network', 'Internal routing and traces', Network],
+  ];
+  return (
+    <section className="content-stack">
+      <div className="section-heading">
+        <div>
+          <p className="kicker">PRESERVED, NOT IN THE WAY</p>
+          <h2>Advanced tools archive</h2>
+          <p>
+            The deep work is still here when you need it. It no longer defines the everyday
+            experience.
+          </p>
+        </div>
+        <Archive size={32} />
+      </div>
+      <div className="archive-grid">
+        {tools.map(([id, title, description, Icon]) => (
+          <button type="button" key={id} onClick={() => onNavigate(id)}>
+            <Icon size={19} />
+            <span>
+              <b>{title}</b>
+              <small>{description}</small>
+            </span>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 
