@@ -10,6 +10,7 @@
   },
   "scripts": {
     "dev": "concurrently -n daemon,web -c cyan,magenta \"pnpm --filter @ai-ff/daemon dev\" \"pnpm --filter @ai-ff/web dev\"",
+    "start": "AI_FF_WORKSPACE_ROOT=../.. AI_FF_WEB_ROOT=../../apps/web/dist pnpm --filter @ai-ff/daemon start",
     "build": "pnpm -r --if-present build",
     "typecheck": "pnpm -r --if-present typecheck",
     "lint": "eslint . && cd services/analytics && uv run ruff check .",

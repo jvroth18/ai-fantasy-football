@@ -7,11 +7,15 @@ import {
   ChevronDown,
   Database,
   FileText,
+  ExternalLink,
+  Heart,
   Home,
   Network,
   LayoutDashboard,
   ListPlus,
   LoaderCircle,
+  MessageCircle,
+  Newspaper,
   Plus,
   Send,
   RefreshCw,
@@ -26,7 +30,14 @@ import {
   X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type FormEvent,
+} from 'react';
 
 import { api, ApiError } from './api.js';
 import { PlayerRankings } from './PlayerRankings.js';
@@ -439,6 +450,26 @@ export function App() {
     await refreshTeam(team.id);
   }
 
+  async function createLeaguePost(memberId: string, body: string) {
+    if (!team) return;
+    const completed = await perform(
+      'league-post',
+      () => api.createLeaguePost(team.id, memberId, body),
+      'Posted to the league',
+    );
+    if (completed) await refreshTeam(team.id);
+  }
+
+  async function addMember(displayName: string) {
+    if (!team) return;
+    const completed = await perform(
+      'member-add',
+      () => api.addMember(team.id, displayName),
+      `${displayName} joined the league`,
+    );
+    if (completed) await refreshTeam(team.id);
+  }
+
   if (loading) {
     return (
       <main className="loading-screen">
@@ -592,6 +623,7 @@ export function App() {
                 detail={selectedDetail}
                 busy={busy}
                 onGenerate={generateFanDesk}
+                onPost={createLeaguePost}
                 onNavigate={setTab}
               />
             ) : null}
@@ -605,7 +637,14 @@ export function App() {
                 onNavigate={setTab}
               />
             ) : null}
-            {tab === 'members' ? <MembersPanel team={team} /> : null}
+            {tab === 'members' ? (
+              <MembersPanel
+                team={team}
+                members={selectedDetail.members ?? []}
+                busy={busy}
+                onAdd={addMember}
+              />
+            ) : null}
             {tab === 'archive' ? <ArchivePanel onNavigate={setTab} /> : null}
             {tab === 'command' ? (
               <CommandCenter
@@ -744,27 +783,126 @@ function LeagueFeed({
   detail,
   busy,
   onGenerate,
+  onPost,
   onNavigate,
 }: {
   detail: TeamDetail;
   busy: string | null;
   onGenerate: () => Promise<void>;
+  onPost: (memberId: string, body: string) => Promise<void>;
   onNavigate: (tab: Tab) => void;
 }) {
-  const posts = detail.fanDesk?.posts ?? [];
+  const aiPosts = detail.fanDesk?.posts ?? [];
+  const [draft, setDraft] = useState('');
+  const [filter, setFilter] = useState<'all' | 'league' | 'news'>('all');
+  const [liked, setLiked] = useState<Record<string, boolean>>({});
+  const currentMember = detail.members?.[0];
+  const feedNews = filter === 'news' ? (detail.news ?? []) : (detail.news ?? []).slice(0, 4);
+  const items = [
+    ...(detail.leaguePosts ?? []).map((post) => ({
+      type: 'member' as const,
+      date: post.createdAt,
+      post,
+    })),
+    ...aiPosts.map((post) => ({ type: 'ai' as const, date: post.createdAt, post })),
+    ...feedNews.map((post) => ({ type: 'news' as const, date: post.publishedAt, post })),
+  ]
+    .filter(
+      (item) =>
+        filter === 'all' || (filter === 'league' ? item.type !== 'news' : item.type === 'news'),
+    )
+    .sort((left, right) => right.date.localeCompare(left.date));
+
+  async function submitPost(event: FormEvent) {
+    event.preventDefault();
+    if (!currentMember || !draft.trim()) return;
+    await onPost(currentMember.id, draft.trim());
+    setDraft('');
+  }
+
   return (
     <section className="social-layout">
       <div className="feed-column">
         <article className="feed-welcome">
-          <div className="league-avatar">{detail.team.name.slice(0, 2).toUpperCase()}</div>
-          <div>
-            <p className="kicker">WELCOME TO THE LEAGUE HOUSE</p>
-            <h2>{detail.team.name}</h2>
-            <p>Moves, matchups, news, and league talk—together in one timeline.</p>
+          <div className="edition-line">
+            <span>
+              {new Intl.DateTimeFormat('en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+              }).format(new Date())}
+            </span>
+            <b>THE LEAGUE EDITION</b>
+            <span>{detail.team.season} SEASON</span>
           </div>
+          <div className="masthead-row">
+            <div className="league-avatar">{detail.team.name.slice(0, 2).toUpperCase()}</div>
+            <div>
+              <p className="masthead-title">League House</p>
+              <h2>{detail.team.name}</h2>
+            </div>
+          </div>
+          <p className="masthead-dek">
+            League moves, sharp takes, and football news—reported live.
+          </p>
         </article>
 
-        {!detail.fanDesk ? (
+        <div className="league-score-strip" aria-label="League activity summary">
+          <span>
+            <b>{(detail.members ?? []).length}</b> Members
+          </span>
+          <span>
+            <b>{(detail.leaguePosts ?? []).length + aiPosts.length}</b> League dispatches
+          </span>
+          <span>
+            <i /> Live news desk
+          </span>
+        </div>
+
+        <div className="feed-tabs" role="tablist" aria-label="Feed filter">
+          {(['all', 'league', 'news'] as const).map((value) => (
+            <button
+              role="tab"
+              aria-selected={filter === value}
+              className={filter === value ? 'active' : ''}
+              key={value}
+              onClick={() => setFilter(value)}
+            >
+              {value === 'all' ? 'For you' : value === 'league' ? 'League talk' : 'NFL news'}
+            </button>
+          ))}
+        </div>
+
+        <form className="league-composer" onSubmit={(event) => void submitPost(event)}>
+          <div className="member-avatar">
+            {currentMember?.displayName.slice(0, 1).toUpperCase() ?? '?'}
+          </div>
+          <label>
+            <span className="sr-only">Post to your league</span>
+            <textarea
+              value={draft}
+              maxLength={1000}
+              placeholder="Talk to your league…"
+              onChange={(event) => setDraft(event.target.value)}
+            />
+          </label>
+          <button type="submit" disabled={!currentMember || !draft.trim() || Boolean(busy)}>
+            Post
+          </button>
+        </form>
+
+        <div className="feed-section-label">
+          <span>
+            {filter === 'news'
+              ? 'National wire'
+              : filter === 'league'
+                ? 'From the league'
+                : 'Top stories'}
+          </span>
+          <small>Updated live</small>
+        </div>
+
+        {items.length === 0 && !detail.fanDesk ? (
           <article className="feed-empty">
             <Sparkles size={28} />
             <h3>Give your league a voice</h3>
@@ -776,68 +914,163 @@ function LeagueFeed({
               Set up the AI
             </button>
           </article>
-        ) : (
-          <>
-            <div className="feed-toolbar">
-              <div>
-                <b>For your league</b>
-                <small>{posts.length} posts</small>
-              </div>
-              <button
-                className="ghost-button"
-                type="button"
-                disabled={Boolean(busy)}
-                onClick={() => void onGenerate()}
-              >
-                <Sparkles size={15} /> {busy === 'fan-generate' ? 'Checking…' : 'Check for updates'}
-              </button>
-            </div>
-            {posts.length === 0 ? (
-              <article className="feed-empty">
-                <Activity size={28} />
-                <h3>The timeline is ready</h3>
-                <p>Sync ESPN or check for updates to publish the first league story.</p>
+        ) : null}
+
+        {items.map((item, index) => {
+          if (item.type === 'member')
+            return (
+              <article className="social-post human-post" key={item.post.id}>
+                <div className="post-avatar human">
+                  {item.post.authorName.slice(0, 1).toUpperCase()}
+                </div>
+                <div className="post-content">
+                  <div className="post-byline">
+                    <b>{item.post.authorName}</b>
+                    <time>{formatDate(item.post.createdAt)}</time>
+                  </div>
+                  <p>{item.post.body}</p>
+                  <PostActions
+                    id={item.post.id}
+                    liked={liked}
+                    setLiked={setLiked}
+                    onReply={() => setDraft(`@${item.post.authorName} `)}
+                  />
+                </div>
               </article>
-            ) : (
-              posts.map((post) => (
-                <article className="social-post" key={post.id}>
-                  <div className="post-avatar">
-                    <Bot size={18} />
-                  </div>
-                  <div className="post-content">
-                    <div className="post-byline">
-                      <b>{detail.fanDesk?.profile.name}</b>
-                      <span>AI host</span>
-                      <time>{formatDate(post.createdAt)}</time>
-                    </div>
-                    <p className="post-kind">{post.kind.replaceAll('_', ' ')}</p>
-                    <h3>{post.headline}</h3>
-                    <p>{post.dek}</p>
-                    <div className="post-proof">
-                      <ShieldCheck size={13} /> Based on {post.evidence.length} verified source
-                      {post.evidence.length === 1 ? '' : 's'}
-                    </div>
-                  </div>
-                </article>
-              ))
-            )}
-          </>
-        )}
+            );
+          if (item.type === 'news')
+            return (
+              <article
+                className={`news-feed-card ${index === 0 ? 'featured' : ''}`}
+                key={item.post.id}
+              >
+                <div className="news-source">
+                  <Newspaper size={15} />
+                  <b>{item.post.source}</b>
+                  <time>{formatDate(item.post.publishedAt)}</time>
+                </div>
+                <h3>{item.post.title}</h3>
+                {item.post.summary ? <p>{item.post.summary}</p> : null}
+                <div className="news-footer">
+                  <button
+                    type="button"
+                    onClick={() => setDraft(`What does “${item.post.title}” mean for our league? `)}
+                  >
+                    <MessageCircle size={13} /> Discuss this
+                  </button>
+                  <a href={item.post.url} target="_blank" rel="noreferrer">
+                    Read source <ExternalLink size={13} />
+                  </a>
+                </div>
+              </article>
+            );
+          return (
+            <article
+              className={`social-post ai-post ${index === 0 ? 'featured' : ''}`}
+              key={item.post.id}
+            >
+              <div className="post-avatar">
+                <Bot size={18} />
+              </div>
+              <div className="post-content">
+                <div className="post-byline">
+                  <b>{detail.fanDesk?.profile.name}</b>
+                  <span>AI host</span>
+                  <time>{formatDate(item.post.createdAt)}</time>
+                </div>
+                <p className="post-kind">{item.post.kind.replaceAll('_', ' ')}</p>
+                <h3>{item.post.headline}</h3>
+                <p>{item.post.dek}</p>
+                <div className="post-proof">
+                  <ShieldCheck size={13} /> Based on {item.post.evidence.length} verified source
+                  {item.post.evidence.length === 1 ? '' : 's'}
+                </div>
+                <PostActions
+                  id={item.post.id}
+                  liked={liked}
+                  setLiked={setLiked}
+                  onReply={() => setDraft(`@${detail.fanDesk?.profile.name ?? 'League AI'} `)}
+                />
+              </div>
+            </article>
+          );
+        })}
+
+        {items.length === 0 && detail.fanDesk ? (
+          <article className="feed-empty">
+            <Activity size={28} />
+            <h3>Your league is quiet—for now</h3>
+            <p>Pull the latest league activity and NFL news to wake up the feed.</p>
+            <button
+              className="ghost-button"
+              disabled={Boolean(busy)}
+              onClick={() => void onGenerate()}
+            >
+              <Sparkles size={15} /> {busy === 'fan-generate' ? 'Checking…' : 'Check for updates'}
+            </button>
+          </article>
+        ) : null}
       </div>
       <aside className="league-rail">
-        <p className="kicker">LEAGUE PULSE</p>
-        <h3>What shows up here</h3>
-        <ul>
-          <li>Roster and waiver moves</li>
-          <li>Matchup moments</li>
-          <li>Trades and standings</li>
-          <li>Player news that matters</li>
-        </ul>
+        <div className="live-label">
+          <span /> LIVE LEAGUE PULSE
+        </div>
+        <h3>
+          {(detail.members ?? []).length} member{(detail.members ?? []).length === 1 ? '' : 's'} in
+          the house
+        </h3>
+        <div className="pulse-stats">
+          <span>
+            <b>{(detail.leaguePosts ?? []).length}</b> league posts
+          </span>
+          <span>
+            <b>{aiPosts.length}</b> AI takes
+          </span>
+          <span>
+            <b>{(detail.news ?? []).length}</b> news stories
+          </span>
+        </div>
         <button type="button" onClick={() => onNavigate('members')}>
           <UserPlus size={15} /> Invite league members
         </button>
+        <div className="rail-news">
+          <p className="kicker">TRENDING NOW</p>
+          {(detail.news ?? []).slice(0, 3).map((story, index) => (
+            <a key={story.id} href={story.url} target="_blank" rel="noreferrer">
+              <span>{index + 1}</span>
+              <b>{story.title}</b>
+              <small>{story.source}</small>
+            </a>
+          ))}
+        </div>
       </aside>
     </section>
+  );
+}
+
+function PostActions({
+  id,
+  liked,
+  setLiked,
+  onReply,
+}: {
+  id: string;
+  liked: Record<string, boolean>;
+  setLiked: (value: Record<string, boolean>) => void;
+  onReply: () => void;
+}) {
+  return (
+    <div className="post-actions">
+      <button
+        className={liked[id] ? 'liked' : ''}
+        onClick={() => setLiked({ ...liked, [id]: !liked[id] })}
+      >
+        <Heart size={15} fill={liked[id] ? 'currentColor' : 'none'} /> {liked[id] ? '1' : 'Like'}
+      </button>
+      <button onClick={onReply}>
+        <MessageCircle size={15} /> Comment
+      </button>
+    </div>
   );
 }
 
@@ -918,12 +1151,29 @@ function SimpleSetup({
   );
 }
 
-function MembersPanel({ team }: { team: TeamDetail['team'] }) {
+function MembersPanel({
+  team,
+  members,
+  busy,
+  onAdd,
+}: {
+  team: TeamDetail['team'];
+  members: NonNullable<TeamDetail['members']>;
+  busy: string | null;
+  onAdd: (name: string) => Promise<void>;
+}) {
   const [copied, setCopied] = useState(false);
+  const [name, setName] = useState('');
   const invite = `${window.location.origin}/join/${team.id}`;
   async function copyInvite() {
     await navigator.clipboard?.writeText(invite);
     setCopied(true);
+  }
+  async function submitMember(event: FormEvent) {
+    event.preventDefault();
+    if (!name.trim()) return;
+    await onAdd(name.trim());
+    setName('');
   }
   return (
     <section className="members-shell content-stack">
@@ -944,11 +1194,35 @@ function MembersPanel({ team }: { team: TeamDetail['team'] }) {
           {copied ? 'Copied!' : 'Copy invite link'}
         </button>
       </article>
-      <div className="empty-panel tall">
-        <Users size={28} />
-        <h3>Your league members will appear here</h3>
-        <p>Invites are currently a local preview while shared accounts are being connected.</p>
+      <form className="member-add-form" onSubmit={(event) => void submitMember(event)}>
+        <label>
+          Add someone on this device
+          <input
+            value={name}
+            maxLength={60}
+            placeholder="League member name"
+            onChange={(event) => setName(event.target.value)}
+          />
+        </label>
+        <button className="ghost-button" disabled={!name.trim() || Boolean(busy)}>
+          Add member
+        </button>
+      </form>
+      <div className="member-list">
+        {members.map((member) => (
+          <article key={member.id}>
+            <div className="member-avatar">{member.displayName.slice(0, 1).toUpperCase()}</div>
+            <span>
+              <b>{member.displayName}</b>
+              <small>{member.role === 'owner' ? 'League owner' : 'Member'}</small>
+            </span>
+          </article>
+        ))}
       </div>
+      <p className="quiet-note">
+        The invite URL is ready for the hosted identity layer. Local member profiles are available
+        now for shared-device testing.
+      </p>
     </section>
   );
 }

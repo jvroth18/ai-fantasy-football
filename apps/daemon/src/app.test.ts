@@ -131,6 +131,35 @@ describe('local daemon API', () => {
     });
   });
 
+  it('persists team-scoped members and human league posts', async () => {
+    const app = await server();
+    const team = await createTeam(app);
+    const initial = await app.inject({ method: 'GET', url: `/api/teams/${team.id}` });
+    const owner = initial.json<{ members: Array<{ id: string; displayName: string }> }>()
+      .members[0];
+    expect(owner).toMatchObject({ displayName: 'Commissioner' });
+
+    const member = await app.inject({
+      method: 'POST',
+      url: `/api/teams/${team.id}/members`,
+      payload: { displayName: 'Jordan' },
+    });
+    expect(member.statusCode).toBe(201);
+
+    const post = await app.inject({
+      method: 'POST',
+      url: `/api/teams/${team.id}/posts`,
+      payload: { memberId: member.json<{ id: string }>().id, body: 'Waiver night starts now.' },
+    });
+    expect(post.statusCode).toBe(201);
+    expect(post.json()).toMatchObject({ authorName: 'Jordan', body: 'Waiver night starts now.' });
+
+    const detail = await app.inject({ method: 'GET', url: `/api/teams/${team.id}` });
+    expect(detail.json<{ leaguePosts: Array<{ body: string }> }>().leaguePosts).toEqual([
+      expect.objectContaining({ body: 'Waiver night starts now.' }),
+    ]);
+  });
+
   it('uploads, reviews, and explicitly activates a versioned rule set', async () => {
     const app = await server();
     const team = await createTeam(app);

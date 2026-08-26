@@ -1,0 +1,15 @@
+.git
+.github
+.codex
+node_modules
+**/dist
+**/.pytest_cache
+**/__pycache__
+**/.venv
+**/.ruff_cache
+**/artifacts
+**/screenshots
+data/cache
+data/raw
+var
+*.sqlite*

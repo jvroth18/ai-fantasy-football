@@ -266,6 +266,36 @@ export const fanPosts = sqliteTable(
   (table) => [index('fan_posts_team_created_idx').on(table.teamId, table.createdAt)],
 );
 
+export const leagueMembers = sqliteTable(
+  'league_members',
+  {
+    id: text('id').primaryKey(),
+    teamId: text('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    displayName: text('display_name').notNull(),
+    role: text('role', { enum: ['owner', 'member'] }).notNull(),
+    joinedAt: text('joined_at').notNull(),
+  },
+  (table) => [index('league_members_team_joined_idx').on(table.teamId, table.joinedAt)],
+);
+
+export const leaguePosts = sqliteTable(
+  'league_posts',
+  {
+    id: text('id').primaryKey(),
+    teamId: text('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    memberId: text('member_id')
+      .notNull()
+      .references(() => leagueMembers.id, { onDelete: 'cascade' }),
+    body: text('body').notNull(),
+    createdAt: text('created_at').notNull(),
+  },
+  (table) => [index('league_posts_team_created_idx').on(table.teamId, table.createdAt)],
+);
+
 export const fanEmailOutbox = sqliteTable(
   'fan_email_outbox',
   {

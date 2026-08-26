@@ -1,10 +1,13 @@
 import { randomUUID } from 'node:crypto';
 
 import cors from '@fastify/cors';
+import fastifyStatic from '@fastify/static';
 import type { CodexReadiness } from '@ai-ff/codex';
 import {
   AutomationRunRepository,
   DataSnapshotRepository,
+  LeagueSocialRepository,
+  NewsRepository,
   openDatabase,
   PortalSnapshotRepository,
   PlayerIntelligenceRepository,
@@ -119,6 +122,11 @@ const fanNetworkEventInputSchema = z.object({
   evidence: z.array(sourceEvidenceSchema).default([]),
   correlationId: z.string().uuid().optional(),
 });
+const memberInputSchema = z.object({ displayName: z.string().trim().min(1).max(60) });
+const leaguePostInputSchema = z.object({
+  memberId: z.string().uuid(),
+  body: z.string().trim().min(1).max(1000),
+});
 
 export type ServerOptions = {
   logger?: boolean;
@@ -138,6 +146,7 @@ export type ServerOptions = {
   > | null;
   codexReadiness?: (() => Promise<CodexReadiness>) | null;
   now?: () => Date;
+  webRoot?: string | null;
 };
 
 function safeTeamInput(input: z.infer<typeof createTeamSchema>, now: string): TeamConfigV1 {
@@ -194,6 +203,8 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
   const snapshots = new DataSnapshotRepository(database.db);
   const portalSnapshots = new PortalSnapshotRepository(database.db);
   const playerIntelligence = new PlayerIntelligenceRepository(database.db);
+  const social = new LeagueSocialRepository(database.db);
+  const news = new NewsRepository(database.db);
   const ruleImports = new RuleImportService(teams, ruleSets, options.ruleExtractor ?? null, now);
 
   await app.register(cors, {
@@ -367,6 +378,7 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
   app.post('/api/teams', async (request, reply) => {
     const input = createTeamSchema.parse(request.body);
     const team = teams.create(safeTeamInput(input, now().toISOString()));
+    social.addMember(team.id, 'Commissioner', 'owner', team.createdAt);
     await options.scheduler?.start?.(false);
     return await reply.code(201).send(team);
   });
@@ -400,7 +412,28 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
             runs: options.fanNetwork.runs(teamId),
           }
         : null,
+      members: social.listMembers(teamId),
+      leaguePosts: social.listPosts(teamId),
+      news: news.listRecent(12).map((item) => JSON.parse(item.newsJson)),
     };
+  });
+
+  app.post('/api/teams/:teamId/members', async (request, reply) => {
+    const { teamId } = teamParamsSchema.parse(request.params);
+    if (!teams.getById(teamId)) return await reply.code(404).send({ error: 'NOT_FOUND' });
+    const { displayName } = memberInputSchema.parse(request.body);
+    return await reply
+      .code(201)
+      .send(social.addMember(teamId, displayName, 'member', now().toISOString()));
+  });
+
+  app.post('/api/teams/:teamId/posts', async (request, reply) => {
+    const { teamId } = teamParamsSchema.parse(request.params);
+    if (!teams.getById(teamId)) return await reply.code(404).send({ error: 'NOT_FOUND' });
+    const input = leaguePostInputSchema.parse(request.body);
+    return await reply
+      .code(201)
+      .send(social.addPost(teamId, input.memberId, input.body, now().toISOString()));
   });
 
   app.get('/api/teams/:teamId/fan-desk', async (request, reply) => {
@@ -594,6 +627,15 @@ export async function buildServer(options: ServerOptions = {}): Promise<FastifyI
     const run = await options.scheduler.trigger(teamId, jobType);
     return run ?? (await reply.code(409).send({ error: 'JOB_ALREADY_RUNNING' }));
   });
+
+  if (options.webRoot) {
+    await app.register(fastifyStatic, { root: options.webRoot, wildcard: false });
+    app.get('/*', async (request, reply) => {
+      if (request.url.startsWith('/api/'))
+        return await reply.code(404).send({ error: 'NOT_FOUND' });
+      return await reply.sendFile('index.html');
+    });
+  }
 
   return app;
 }

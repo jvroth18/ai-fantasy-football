@@ -30,8 +30,8 @@ The manager dashboard, roster tools, player intelligence, draft, waivers, trades
 - The feed must be useful before users understand agents, models, jobs, or data pipelines.
 - Every AI-authored league post is labeled and grounded in observed league activity or attributed news.
 - League connection and consequential ESPN actions remain separate. Connecting is read-only by default.
-- Invitations shown in the current local app are a product preview until shared identity and hosted league membership are implemented.
+- League members and posts are durable, but the current private preview does not yet provide hosted identity or authorization.
 
 ## Next vertical slice
 
-Add durable league membership and human posts/replies. That turns the current generated timeline into the complete shared message-board experience without expanding the navigation.
+Add hosted identity, invitation redemption, threaded replies, and shared reactions. That turns the durable mixed feed into a safe multi-user league room without expanding the navigation.

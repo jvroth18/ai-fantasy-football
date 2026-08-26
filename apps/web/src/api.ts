@@ -130,4 +130,8 @@ export const api = {
     teamId: string,
     input: { type: string; payload: Record<string, unknown> },
   ) => await request<unknown>(`/api/teams/${teamId}/fan-network/events`, json('POST', input)),
+  addMember: async (teamId: string, displayName: string) =>
+    await request<unknown>(`/api/teams/${teamId}/members`, json('POST', { displayName })),
+  createLeaguePost: async (teamId: string, memberId: string, body: string) =>
+    await request<unknown>(`/api/teams/${teamId}/posts`, json('POST', { memberId, body })),
 };

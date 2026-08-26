@@ -197,6 +197,35 @@ export type TeamDetail = {
   runs: AutomationRun[];
   fanDesk?: FanDeskState | null;
   fanNetwork?: FanNetworkState | null;
+  members?: LeagueMember[];
+  leaguePosts?: LeaguePost[];
+  news?: LeagueNewsItem[];
+};
+
+export type LeagueMember = {
+  id: string;
+  teamId: string;
+  displayName: string;
+  role: 'owner' | 'member';
+  joinedAt: string;
+};
+export type LeaguePost = {
+  id: string;
+  teamId: string;
+  memberId: string;
+  authorName: string;
+  body: string;
+  createdAt: string;
+};
+export type LeagueNewsItem = {
+  id: string;
+  title: string;
+  summary: string;
+  source: string;
+  url: string;
+  publishedAt: string;
+  fetchedAt: string;
+  playerIds: string[];
 };
 
 export type FanDeskProfile = {

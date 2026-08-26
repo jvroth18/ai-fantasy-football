@@ -6,3 +6,4 @@ export * from './schema.js';
 export * from './workflow-repositories.js';
 export * from './fan-desk-repositories.js';
 export * from './fan-network-repositories.js';
+export * from './league-social-repository.js';

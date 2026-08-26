@@ -30,6 +30,7 @@ import type { FanVoiceWriter } from '@ai-ff/fan-desk';
 const host = process.env.AI_FF_HOST ?? '127.0.0.1';
 const port = Number(process.env.AI_FF_PORT ?? 4318);
 const workspaceRoot = resolve(process.env.AI_FF_WORKSPACE_ROOT ?? process.cwd());
+const webRoot = process.env.AI_FF_WEB_ROOT ? resolve(process.env.AI_FF_WEB_ROOT) : null;
 const configuredPath = process.env.AI_FF_DB_PATH;
 const databasePath =
   configuredPath === ':memory:' ? ':memory:' : resolve(configuredPath ?? join('var', 'app.sqlite'));
@@ -175,6 +176,7 @@ const app = await buildServer({
   fanDesk,
   fanNetwork,
   codexReadiness: async () => await codex.readiness(workspaceRoot),
+  webRoot,
 });
 await app.listen({ host, port });
 

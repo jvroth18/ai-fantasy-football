@@ -291,6 +291,37 @@ const migrations = [
       CREATE INDEX fan_agent_runs_team_created_idx ON fan_agent_runs(team_id, created_at DESC);
     `,
   },
+  {
+    version: 8,
+    sql: `
+      CREATE TABLE league_members (
+        id TEXT PRIMARY KEY,
+        team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+        display_name TEXT NOT NULL,
+        role TEXT NOT NULL CHECK (role IN ('owner', 'member')),
+        joined_at TEXT NOT NULL
+      );
+      CREATE INDEX league_members_team_joined_idx ON league_members(team_id, joined_at);
+      INSERT INTO league_members (id, team_id, display_name, role, joined_at)
+      SELECT
+        lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' ||
+        substr(lower(hex(randomblob(2))), 2) || '-a' || substr(lower(hex(randomblob(2))), 2) || '-' ||
+        lower(hex(randomblob(6))),
+        id,
+        'Commissioner',
+        'owner',
+        created_at
+      FROM teams;
+      CREATE TABLE league_posts (
+        id TEXT PRIMARY KEY,
+        team_id TEXT NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+        member_id TEXT NOT NULL REFERENCES league_members(id) ON DELETE CASCADE,
+        body TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX league_posts_team_created_idx ON league_posts(team_id, created_at DESC);
+    `,
+  },
 ] as const;
 
 export function applyMigrations(database: Database.Database): void {

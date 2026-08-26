@@ -1,6 +1,6 @@
-# ai-fantasy-football
+# League House
 
-An open-source, local-first fantasy football front office. It combines deterministic scoring and roster logic, free football data, statistical projections, Codex analysis, and auditable ESPN browser automation.
+A local-first fantasy football social experience. Connect a league, choose an AI host, invite members, and share one living feed of league activity, commentary, and relevant NFL news. The deeper management and automation tools remain available in the archive.
 
 ## Status
 
@@ -34,6 +34,8 @@ The second command downloads the available nflverse Parquet window into ignored 
 
 The web interface runs at `http://127.0.0.1:4317`; the local daemon runs at `http://127.0.0.1:4318`.
 Codex authentication stays in the CLI; the readiness check reports only an account type and capability counts. See [docs/CODEX_INTEGRATION.md](docs/CODEX_INTEGRATION.md).
+
+A combined production process and container are available for private previews. Public hosting remains gated on authentication and route-level authorization. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 The responsive front office guides first-run team creation, keeps every team independently switchable, and exposes rules, strategy, roster, player intelligence, draft, waiver, trade, schedule, audit, and safety workspaces. The interface has no external font or analytics dependency.
 

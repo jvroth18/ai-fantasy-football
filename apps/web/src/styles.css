@@ -29,6 +29,18 @@
   box-sizing: border-box;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 html {
   min-width: 320px;
   min-height: 100%;
@@ -102,6 +114,76 @@ body {
   padding: 14px 20px;
   border-bottom: 1px solid var(--line);
 }
+
+.feed-tabs {
+  display: flex;
+  gap: 5px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.feed-tabs button {
+  padding: 8px 13px;
+  color: var(--muted);
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 750;
+}
+.feed-tabs button.active {
+  color: var(--bg);
+  background: var(--team-accent);
+}
+
+.league-composer {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  align-items: end;
+  gap: 11px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.league-composer label {
+  display: block;
+}
+.league-composer textarea {
+  width: 100%;
+  min-height: 44px;
+  max-height: 140px;
+  resize: vertical;
+  padding: 11px 12px;
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.16);
+}
+.league-composer button {
+  min-height: 38px;
+  padding: 0 14px;
+  color: var(--bg);
+  border: 0;
+  border-radius: 9px;
+  background: var(--team-accent);
+  font-weight: 800;
+}
+.member-avatar {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--bg);
+  background: var(--team-accent);
+  font-weight: 900;
+}
+.post-avatar.human {
+  color: var(--text);
+  background: var(--panel-raised);
+}
+.human-post .post-content > p {
+  margin: 8px 0 0;
+}
 .feed-toolbar div {
   display: flex;
   flex-direction: column;
@@ -118,6 +200,14 @@ body {
 }
 .social-post:last-child {
   border-bottom: 0;
+}
+.social-post.featured,
+.news-feed-card.featured {
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--team-accent) 7%, transparent),
+    transparent 65%
+  );
 }
 .post-avatar {
   display: grid;
@@ -174,6 +264,83 @@ body {
   color: var(--muted);
   font-size: 11px;
 }
+.post-actions {
+  display: flex;
+  gap: 18px;
+  margin-top: 14px;
+}
+.post-actions button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  color: var(--muted);
+  border: 0;
+  background: none;
+  font-size: 12px;
+  font-weight: 700;
+}
+.post-actions button:hover,
+.post-actions button.liked {
+  color: var(--team-accent);
+}
+.news-feed-card {
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, #5da9ff 4%, transparent);
+}
+.news-source {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #8ec5ff;
+  font-size: 11px;
+}
+.news-source time {
+  margin-left: auto;
+  color: var(--muted);
+}
+.news-feed-card h3 {
+  margin: 13px 0 8px;
+  font-size: 20px;
+  line-height: 1.3;
+}
+.news-feed-card > p {
+  color: #bdcbc3;
+  line-height: 1.55;
+}
+.news-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-top: 15px;
+  padding-top: 13px;
+  border-top: 1px solid var(--line);
+}
+.news-footer button,
+.news-footer a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.news-footer button {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.news-footer button:hover {
+  color: var(--team-accent);
+}
+.news-footer a {
+  color: #8ec5ff;
+  text-decoration: none;
+  font-weight: 750;
+}
 .feed-empty {
   padding: 64px 28px;
   text-align: center;
@@ -215,6 +382,379 @@ body {
   color: var(--team-accent);
   background: none;
   font-weight: 750;
+}
+.live-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+}
+.live-label span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--success) 12%, transparent);
+}
+.pulse-stats {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 22px;
+}
+.pulse-stats span {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.pulse-stats b {
+  color: var(--text);
+  font-size: 18px;
+}
+.rail-news {
+  display: grid;
+  gap: 2px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.rail-news > p {
+  margin-bottom: 8px;
+}
+.rail-news a {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 2px 8px;
+  padding: 10px 0;
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+}
+.rail-news a > span {
+  grid-row: 1 / 3;
+  color: var(--team-accent);
+  font-weight: 900;
+}
+.rail-news a b {
+  font-size: 12px;
+  line-height: 1.35;
+}
+.rail-news a small {
+  color: var(--muted);
+}
+
+/* Editorial league front page */
+.social-layout {
+  grid-template-columns: minmax(0, 760px) minmax(230px, 290px);
+  gap: 20px;
+  max-width: 1090px;
+}
+
+.feed-column {
+  color: #191c1a;
+  border-color: #d4d1c7;
+  border-radius: 2px;
+  background: #f7f5ef;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.18);
+}
+
+.feed-welcome {
+  display: block;
+  padding: 16px 24px 18px;
+  color: #151816;
+  border-bottom: 4px double #252a27;
+  background: #f7f5ef;
+  text-align: center;
+}
+
+.edition-line {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  padding-bottom: 9px;
+  color: #555b57;
+  border-bottom: 1px solid #b7b5ac;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.edition-line span:first-child {
+  text-align: left;
+}
+
+.edition-line span:last-child {
+  text-align: right;
+}
+
+.masthead-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  padding: 13px 0 8px;
+}
+
+.masthead-row .league-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  color: #142016;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.12);
+}
+
+.masthead-title {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(34px, 6vw, 54px);
+  font-weight: 900;
+  letter-spacing: -0.055em;
+  line-height: 0.9;
+}
+
+.feed-welcome h2 {
+  margin: 6px 0 0;
+  color: #48504b;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.masthead-dek,
+.feed-welcome p.masthead-dek:last-child {
+  margin: 0;
+  color: #555b57;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 13px;
+  font-style: italic;
+}
+
+.league-score-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid #d4d1c7;
+  background: #ece9e0;
+}
+
+.league-score-strip span {
+  padding: 10px 14px;
+  color: #606560;
+  border-right: 1px solid #d4d1c7;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.league-score-strip span:last-child {
+  border-right: 0;
+}
+
+.league-score-strip b {
+  margin-right: 4px;
+  color: #151816;
+  font-size: 13px;
+}
+
+.league-score-strip i {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: #198754;
+}
+
+.feed-tabs {
+  gap: 0;
+  padding: 0 20px;
+  border-bottom-color: #cbc8be;
+  background: #fffef9;
+}
+
+.feed-tabs button {
+  padding: 13px 14px 11px;
+  color: #656a66;
+  border-radius: 0;
+  border-bottom: 3px solid transparent;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.feed-tabs button.active {
+  color: #171a18;
+  border-bottom-color: #171a18;
+  background: transparent;
+}
+
+.league-composer {
+  padding: 13px 20px;
+  border-bottom-color: #d4d1c7;
+  background: #ece9e0;
+}
+
+.league-composer textarea {
+  min-height: 40px;
+  color: #181b19;
+  border-color: #c4c0b5;
+  border-radius: 2px;
+  background: #fffef9;
+}
+
+.league-composer button {
+  color: #101511;
+  border-radius: 2px;
+}
+
+.feed-section-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 13px 22px 8px;
+  color: #171a18;
+  border-bottom: 1px solid #aaa89f;
+  background: #f7f5ef;
+}
+
+.feed-section-label span {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.feed-section-label small {
+  color: #6b706c;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.social-post,
+.news-feed-card {
+  border-bottom-color: #d4d1c7;
+  background: #f7f5ef;
+}
+
+.social-post {
+  padding: 20px 22px;
+}
+
+.social-post.featured,
+.news-feed-card.featured {
+  padding-top: 25px;
+  padding-bottom: 25px;
+  background: #fffef9;
+}
+
+.social-post.featured .post-content h3,
+.news-feed-card.featured h3 {
+  font-size: clamp(25px, 4vw, 35px);
+  letter-spacing: -0.025em;
+  line-height: 1.04;
+}
+
+.post-avatar {
+  color: #132015;
+}
+
+.post-avatar.human {
+  color: #f7f5ef;
+  background: #303632;
+}
+
+.post-byline,
+.post-byline b,
+.post-content h3,
+.news-feed-card h3 {
+  color: #171a18;
+}
+
+.post-byline span {
+  color: #28512f;
+  background: #dce7d9;
+}
+
+.post-byline time,
+.post-actions button,
+.post-proof {
+  color: #676d68;
+}
+
+.post-kind {
+  color: #345c39;
+}
+
+.post-content h3,
+.news-feed-card h3 {
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.post-content > p:not(.post-kind),
+.news-feed-card > p,
+.human-post .post-content > p {
+  color: #444a46;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 15px;
+  line-height: 1.62;
+}
+
+.news-feed-card {
+  padding: 20px 22px;
+}
+
+.news-source {
+  color: #315d76;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.news-source time {
+  color: #6b706c;
+}
+
+.news-footer {
+  border-top-color: #d4d1c7;
+}
+
+.news-footer button,
+.news-footer a {
+  color: #3f6048;
+}
+
+.feed-empty {
+  color: #171a18;
+}
+
+.feed-empty p {
+  color: #626762;
+}
+
+.league-rail {
+  position: sticky;
+  top: 22px;
+  border-radius: 2px;
+  border-color: #323f37;
+  background: #101b15;
+}
+
+.league-rail h3 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 21px;
+}
+
+.rail-news a b {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 13px;
 }
 .setup-steps {
   display: grid;
@@ -279,6 +819,117 @@ body {
   color: var(--text);
   text-overflow: ellipsis;
 }
+
+.member-add-form {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+}
+.member-add-form label {
+  display: grid;
+  flex: 1;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.member-add-form input {
+  min-height: 42px;
+  padding: 0 12px;
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.16);
+}
+.member-list {
+  display: grid;
+  gap: 8px;
+}
+.member-list article {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+}
+.member-list article > span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.member-list small {
+  color: var(--muted);
+}
+
+.league-link-field > span {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.league-link-field > span:focus-within {
+  border-color: var(--team-accent);
+}
+
+.league-link-field > span svg {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+.league-link-field > span input {
+  padding-inline: 0;
+  border: 0;
+  background: transparent;
+  outline: 0;
+}
+
+.league-link-field small {
+  margin-top: 7px;
+  color: var(--muted);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.field-error {
+  margin: -3px 0 2px;
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.link-success {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: -3px;
+  color: var(--success);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.connection-details {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.connection-details summary {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.connection-details .form-grid {
+  margin-top: 14px;
+}
 .archive-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -316,11 +967,31 @@ body {
     grid-template-columns: 1fr;
   }
   .league-rail {
-    order: -1;
+    position: static;
   }
 }
 
 @media (max-width: 620px) {
+  .feed-welcome {
+    padding: 12px 14px 15px;
+  }
+  .edition-line {
+    grid-template-columns: 1fr auto;
+  }
+  .edition-line span:first-child {
+    display: none;
+  }
+  .masthead-title {
+    font-size: 36px;
+  }
+  .league-score-strip span {
+    padding: 9px 5px;
+    font-size: 8px;
+  }
+  .league-score-strip b {
+    display: block;
+    margin: 0 0 2px;
+  }
   .setup-steps article {
     grid-template-columns: 36px 1fr;
   }
@@ -331,6 +1002,16 @@ body {
     grid-template-columns: 1fr;
   }
   .invite-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .league-composer {
+    grid-template-columns: 32px 1fr;
+  }
+  .league-composer button {
+    grid-column: 2;
+  }
+  .member-add-form {
     align-items: stretch;
     flex-direction: column;
   }

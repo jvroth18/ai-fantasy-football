@@ -91,7 +91,7 @@ describe('application shell', () => {
     expect(
       await screen.findByRole('heading', { name: 'Connect your fantasy league.' }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Create team/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Connect league/ })).toBeInTheDocument();
     expect(screen.getByText(/starts local, independent/)).toBeInTheDocument();
   });
 
@@ -172,13 +172,13 @@ describe('application shell', () => {
     fireEvent.change(screen.getByLabelText('Team name'), {
       target: { value: configuredTeam.name },
     });
-    fireEvent.change(screen.getByLabelText('ESPN league ID'), {
-      target: { value: configuredTeam.espnLeagueId },
+    fireEvent.change(screen.getByPlaceholderText('https://fantasy.espn.com/...'), {
+      target: {
+        value: `https://fantasy.espn.com/football/team?leagueId=${configuredTeam.espnLeagueId}&teamId=${configuredTeam.espnTeamId}`,
+      },
     });
-    fireEvent.change(screen.getByLabelText('ESPN team ID'), {
-      target: { value: configuredTeam.espnTeamId },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /Create team/ }));
+    expect(screen.getByText('ESPN league found')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Connect league/ }));
 
     await waitFor(() =>
       expect(fetch).toHaveBeenCalledWith('/api/teams', expect.objectContaining({ method: 'POST' })),
